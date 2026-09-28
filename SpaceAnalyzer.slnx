@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SpaceAnalyzer/SpaceAnalyzer.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SpaceAnalyzer.Tests/SpaceAnalyzer.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <File Path="tools/FontBaker.cs" />
+  </Folder>
+  <Folder Name="/build/">
+    <File Path="build/macos-app.sh" />
+    <File Path="build/publish.sh" />
+  </Folder>
+</Solution>

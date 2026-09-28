@@ -39,10 +39,12 @@ public sealed partial class MainView
                 AddZone(ZTreemap, area, hand: false);
                 return;
             }
+            // A zoom animation hands its old picture to _prevLayer and leaves _layer empty: that is not a resize.
+            bool resized = _layer is not null || (_prevLayer is not null && !SameLayerSize(_prevLayer, area));
             _layer?.Dispose();
             _layer = c.CreateLayer(area.W, area.H);
             _layoutDirty = true;
-            if (_anim) EndAnimation();
+            if (_anim && resized) EndAnimation();
         }
 
         if (_layoutDirty) RenderLayer();

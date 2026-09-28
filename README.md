@@ -44,9 +44,11 @@
 
 | Plataforma | Estado | Tamaño |
 |---|---|---|
-| macOS (Apple Silicon e Intel) | ✅ Funcional | ~450 KB |
-| Windows 10/11 | 🚧 En desarrollo (capa Win32) | ~500 KB |
-| Linux (X11) | 🚧 En desarrollo (capa X11) | ~400 KB |
+| macOS (Apple Silicon e Intel) | ✅ Funcional, probado | ~450 KB |
+| Windows 10/11 (x64, ARM64) | 🧪 Implementado (Win32); falta probarlo en un equipo real | ~500 KB |
+| Linux (X11 y XWayland) | 🧪 Implementado (Xlib); falta probarlo en un equipo real | ~400 KB |
+
+La interfaz en sí, con el dibujo, la disposición, el ratón y el teclado, es el mismo código en todos los sistemas. Tiene pruebas automáticas que se ejecutan en cualquier sistema operativo.
 
 ## Compilar y ejecutar
 
@@ -68,6 +70,16 @@ Si prefieres un ejecutable nativo, sin ninguna dependencia (pesa unos pocos MB),
 ```bash
 dotnet publish src/SpaceAnalyzer -c Release -r win-x64 -p:PublishAot=true
 ```
+
+También hay scripts de ayuda:
+
+```bash
+./build/publish.sh        # ejecutables para todas las plataformas, en artifacts/
+./build/macos-app.sh      # SpaceAnalyzer.app con su icono (macOS)
+dotnet test               # pruebas automáticas
+```
+
+El `.exe` de Windows también se puede generar desde macOS o Linux. Solo hay una diferencia: el icono del archivo y el manifiesto se incrustan únicamente al compilar en Windows. Aun así, la ventana siempre muestra su icono.
 
 ## Uso
 
@@ -105,8 +117,10 @@ src/SpaceAnalyzer/
   Render/     rasterizador, motor de texto, fuente Inter incrustada, PNG
   UI/         toda la interfaz, independiente del sistema operativo
   Platform/   capas mínimas: Windows (Win32), MacOS (AppKit), Linux (X11)
+tests/SpaceAnalyzer.Tests/   pruebas: escaneo, algoritmo, dibujo, texto e interfaz sin ventana
 tools/
   FontBaker.cs   convierte una fuente TTF al formato compacto .saf
+build/           scripts de publicación
 ```
 
 ## Licencia
@@ -123,6 +137,6 @@ Incluye la fuente Inter (SIL Open Font License 1.1) e iconos basados en Lucide (
 
 There is no UI framework. Everything, including shapes, text with the embedded Inter font, and icons, is drawn by a small software renderer written in C#. Each operating system only needs a thin layer that opens the window and forwards input: Win32, AppKit or X11.
 
-The macOS version works today. The Windows and Linux layers are in progress.
+The macOS version is tested. The Windows (Win32) and Linux (Xlib) layers are implemented but have not been tried on real machines yet.
 
 Build it with `dotnet publish src/SpaceAnalyzer -c Release -r <rid>`.

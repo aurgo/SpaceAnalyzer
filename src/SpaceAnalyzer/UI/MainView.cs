@@ -989,4 +989,11 @@ public sealed partial class MainView
     }
     internal void DebugHoverCard() => _cardVisible = _hoverCell is not null;
     internal void DebugToast(string text) => ShowToast(text);
+    internal bool IsAnimating => _anim;
+    internal string SearchText => _search;
+    internal bool SearchFocused => _searchBox.Focused;
+    internal bool MenuOpen => _popup is not null;
+    internal string? ToastText => _toast;
+    internal bool DialogOpen => _dialog != DialogKind.None;
+    internal RectF TreemapRect => _tmRect;
 }
