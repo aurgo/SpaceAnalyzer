@@ -71,7 +71,7 @@ public static class Snapshot
                 view.DebugShowScanning(o.Path ?? "/Users/demo", 1_284_331, 97_420, 186_400_000_000);
                 break;
             default:
-                if (o.Demo) view.LoadTree(DemoTree.Build(), DemoTree.Volume, TimeSpan.FromSeconds(3.4));
+                if (o.Demo) view.LoadTree(DemoTree.Build(english: !Strings.Spanish), DemoTree.Volume, TimeSpan.FromSeconds(3.4));
                 else if (o.Path is not null) view.ScanNow(o.Path);
                 else break;
                 var root = view.RootNode;
