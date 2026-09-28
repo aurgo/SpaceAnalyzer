@@ -23,8 +23,8 @@ public static class DemoTree
         var root = b.Root("/Users/demo");
 
         var movies = b.Dir(root, "Movies");
-        b.File(movies, "Vacaciones Islandia 2025.mov", 8_400 * MB, 290);
-        b.File(movies, "Boda Ana y Luis.mp4", 5_100 * MB, 700);
+        b.File(movies, "Viaje a Islandia 4K.mov", 8_400 * MB, 290);
+        b.File(movies, "Documental 4K.mp4", 5_100 * MB, 700);
         var fcp = b.Dir(movies, "Final Cut Projects");
         b.Files(fcp, "Clip", ".mov", 14, 180 * MB, 900 * MB, 120, 400);
         var render = b.Dir(fcp, "Render Files");
@@ -48,8 +48,8 @@ public static class DemoTree
 
         var music = b.Dir(root, "Music");
         var media = b.Dir(b.Dir(music, "Music"), "Media");
-        foreach (var artist in new[] { "Rosalía", "Daft Punk", "Bad Bunny", "Radiohead", "Vetusta Morla", "Queen", "Nathy Peluso", "Björk" })
-            b.Files(b.Dir(media, artist), "Pista", ".m4a", 24, 6 * MB, 14 * MB, 400, 3000);
+        foreach (var genre in new[] { "Rock", "Jazz", "Pop", "Clásica", "Electrónica", "Flamenco", "Indie", "Bandas sonoras" })
+            b.Files(b.Dir(media, genre), "Pista", ".m4a", 24, 6 * MB, 14 * MB, 400, 3000);
         var logic = b.Dir(music, "Logic");
         b.File(logic, "Maqueta EP.logicx", 2_300 * MB, 45);
         b.Files(b.Dir(logic, "Samples"), "sample", ".wav", 40, 12 * MB, 80 * MB, 45, 600);
@@ -102,7 +102,7 @@ public static class DemoTree
             b.Files(b.Dir(caches, name), "cache", ".db", 50, 100 * KB, 90 * MB, 0, 60);
         var support = b.Dir(lib, "Application Support");
         var steam = b.Dir(b.Dir(support, "Steam"), "steamapps");
-        b.Files(b.Dir(steam, "Baldur's Gate 3"), "Game", ".pak", 9, 900 * MB, 6_000 * MB, 300, 500);
+        b.Files(b.Dir(steam, "Juego de rol"), "Game", ".pak", 9, 900 * MB, 6_000 * MB, 300, 500);
         b.Files(b.Dir(support, "Slack"), "IndexedDB", ".ldb", 80, 1 * MB, 20 * MB, 0, 30);
         b.Files(b.Dir(support, "Code"), "workspaceStorage", ".json", 200, 1 * KB, 3 * MB, 0, 90);
         b.File(b.Dir(b.Dir(lib, "Containers"), "com.docker.docker"), "Docker.raw", 21_000 * MB, 1);
