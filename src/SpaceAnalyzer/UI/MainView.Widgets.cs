@@ -351,19 +351,21 @@ public sealed partial class MainView
 
         float right = box.Right - (tb.Text.Length > 0 ? 30 * S : 10 * S);
 
-        // Results: "12 · 3,4 GB", or a red "0" when nothing matches.
+        // Results: "12 · 3,4 GB" (just "12" in a narrow box), or a red "0" when nothing matches.
         string? results = null;
         if (_search.Length > 0 && !_searchPending)
-            results = _searchCount == 0 ? "0" : $"{Fmt.Count(_searchCount)} · {Fmt.Size(_searchBytes)}";
-        if (results is not null)
         {
             var rf = F(11.5f, Weight.Medium);
-            float rw = c.MeasureText(results, rf);
-            if (right - rw - 8 * S - (box.X + 34 * S) >= 56 * S)
+            string full = _searchCount == 0 ? "0" : $"{Fmt.Count(_searchCount)} · {Fmt.Size(_searchBytes)}";
+            foreach (var candidate in new[] { full, Fmt.Count(_searchCount) })
             {
-                c.DrawText(results, RectF.FromLTRB(right - rw - 2 * S, box.Y, right, box.Bottom), rf,
+                float rw = c.MeasureText(candidate, rf);
+                if (right - rw - 8 * S - (box.X + 34 * S) < 40 * S) continue;
+                results = candidate;
+                c.DrawText(candidate, RectF.FromLTRB(right - rw - 2 * S, box.Y, right, box.Bottom), rf,
                     _searchCount == 0 ? T.Danger : T.TextMuted, TextAlign.Right, Trim.None);
                 right -= rw + 10 * S;
+                break;
             }
         }
 

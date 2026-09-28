@@ -20,7 +20,7 @@ public sealed partial class MainView
               ZTreemap = 20, ZCancel = 21, ZChoose = 22, ZHomeFolder = 23, ZResume = 24, ZInfoPath = 25,
               ZDlgBackdrop = 30, ZDlgCard = 31, ZDlgCancel = 32, ZDlgOk = 33,
               ZAction = 40,    // 40..43
-              ZCrumb = 100, ZType = 200, ZLargest = 300, ZDrive = 400;
+              ZCrumb = 100, ZCrumbMore = 199, ZType = 200, ZLargest = 300, ZDrive = 400;
 
     readonly IPlatform P;
     Theme T = Theme.DarkTheme;

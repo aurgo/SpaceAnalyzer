@@ -150,39 +150,42 @@ public sealed partial class MainView
             widths[i] = Math.Min(maxCrumb, c.MeasureText(labels[i], i == n2 - 1 ? fLast : f)) + pad * 2 + (i == 0 ? icon : 0);
         }
 
-        // Always show the first and last crumbs; drop middle ones (as "…") when space is short.
+        // The current folder always shows. When space is short, middle folders fold into "…" (a menu),
+        // and on very narrow windows the first one goes too: "… › current".
         float ellW = c.MeasureText("…", f) + pad * 2;
-        int firstTail = 1;
-        float Total(int from)
+        float Width(bool withFirst, int tail)
         {
-            float t = widths[0];
-            if (from > 1) t += sep + ellW;
-            for (int i = from; i < n2; i++) t += sep + widths[i];
+            float t = 0;
+            bool any = false;
+            if (withFirst) { t += widths[0]; any = true; }
+            if (tail > (withFirst ? 1 : 0)) { t += (any ? sep : 0) + ellW; any = true; }
+            for (int i = tail; i < n2; i++) { t += (any ? sep : 0) + widths[i]; any = true; }
             return t;
         }
-        while (firstTail < n2 - 1 && Total(firstTail) > area.W) firstTail++;
+        bool showFirst = true;
+        int tail = 1;
+        while (tail < n2 - 1 && Width(true, tail) > area.W) tail++;
+        if (n2 > 1 && Width(true, tail) > area.W)
+        {
+            showFirst = false;
+            tail = n2 - 1;
+        }
 
         float x = area.X;
-        for (int i = 0; i < n2; i++)
+        bool drawn = false;
+        void Separator()
         {
-            if (i > 0 && i < firstTail) continue;
-            if (i > 0)
-            {
-                c.DrawIcon(Icons.ChevronRight, new RectF(x + 2 * S, area.CenterY - 7 * S, 14 * S, 14 * S), T.TextMuted, 1.7f * S);
-                x += sep;
-                if (i == firstTail && firstTail > 1)
-                {
-                    c.DrawText("…", new RectF(x, area.Y, ellW, area.H), f, T.TextMuted, TextAlign.Center);
-                    x += ellW;
-                    c.DrawIcon(Icons.ChevronRight, new RectF(x + 2 * S, area.CenterY - 7 * S, 14 * S, 14 * S), T.TextMuted, 1.7f * S);
-                    x += sep;
-                }
-            }
-            float w = Math.Min(widths[i], area.Right - x);
-            if (w < 24 * S) break;
-            var r = new RectF(x, area.Y, w, area.H);
+            c.DrawIcon(Icons.ChevronRight, new RectF(x + 2 * S, area.CenterY - 7 * S, 14 * S, 14 * S), T.TextMuted, 1.7f * S);
+            x += sep;
+        }
+
+        void Crumb(int i)
+        {
             bool last = i == n2 - 1;
-            int id = ZCrumb + i;
+            float w = Math.Min(widths[i], area.Right - x);
+            if (w < 24 * S) return;
+            var r = new RectF(x, area.Y, w, area.H);
+            int id = ZCrumb + Math.Min(i, 98);
             if (!last && Hot(id)) c.FillRoundRect(r, 7 * S, Down(id) ? T.SurfacePressed : T.SurfaceHover);
             float tx = r.X + pad;
             if (i == 0)
@@ -195,8 +198,32 @@ public sealed partial class MainView
                 last || Hot(id) ? T.TextPrimary : T.TextSecondary);
             var node = chain[i];
             if (!last) AddZone(id, r, () => NavigateTo(node), i == 0 ? node.FullPath : null);
-            else if (i == 0) AddZone(id, r, null, node.FullPath, hand: false);
+            else AddZone(id, r, null, node.FullPath, hand: false);
             x += w;
+            drawn = true;
+        }
+
+        if (showFirst) Crumb(0);
+        int hiddenFrom = showFirst ? 1 : 0, hiddenTo = tail - 1;
+        if (hiddenTo >= hiddenFrom)
+        {
+            if (drawn) Separator();
+            var r = new RectF(x, area.Y, ellW, area.H);
+            if (Hot(ZCrumbMore)) c.FillRoundRect(r, 7 * S, Down(ZCrumbMore) ? T.SurfacePressed : T.SurfaceHover);
+            c.DrawText("…", r, f, Hot(ZCrumbMore) ? T.TextPrimary : T.TextSecondary, TextAlign.Center, Trim.None);
+            AddZone(ZCrumbMore, r, () =>
+            {
+                var items = new List<MenuEntry>();
+                for (int i = hiddenFrom; i <= hiddenTo; i++) items.Add(new MenuEntry(i, labels[i]));
+                OpenMenu(items, r.X, r.Bottom + 4 * S, i => NavigateTo(chain[i]));
+            });
+            x += ellW;
+            drawn = true;
+        }
+        for (int i = tail; i < n2; i++)
+        {
+            if (drawn) Separator();
+            Crumb(i);
         }
     }
 
