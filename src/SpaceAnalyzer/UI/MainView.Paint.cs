@@ -233,7 +233,7 @@ public sealed partial class MainView
         float largestMin = sep + head + Math.Min(_largest.Count, 5) * rowFile;
         int typeRows = types;
         if (y + head + types * rowType + largestMin > bottom)
-            typeRows = Math.Clamp((int)((bottom - y - head - largestMin) / rowType), 3, types);
+            typeRows = Math.Clamp((int)((bottom - y - head - largestMin) / rowType), Math.Min(3, types), types);
         y = PaintTypes(c, x, y, w, typeRows);
         if (_largest.Count > 0 && y + sep + head + rowFile <= bottom)
         {

@@ -385,6 +385,7 @@ sealed unsafe class WinHost : IPlatform
 
     void Report(Exception ex)
     {
+        ErrorLog.Write(ex);
         if (_reportedError) return;
         _reportedError = true;
         string text = $"{Strings.AppName}\n\n{ex.GetType().Name}: {ex.Message}\n\n{ex.StackTrace}";

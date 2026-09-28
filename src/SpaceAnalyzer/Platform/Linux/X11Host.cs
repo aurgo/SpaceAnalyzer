@@ -129,15 +129,15 @@ sealed unsafe class X11Host : IPlatform
             {
                 XNextEvent(_display, ev);
                 if (XFilterEvent(ev, IntPtr.Zero) != 0) continue; // consumed by the input method
-                Handle(ev);
+                Guard(() => Handle(ev));
                 if (!_running) return;
             }
-            while (_posted.TryDequeue(out var action)) action();
-            RunDueTimers();
+            while (_posted.TryDequeue(out var action)) Guard(action);
+            Guard(RunDueTimers);
             if (_dirty)
             {
                 _dirty = false;
-                Paint();
+                Guard(Paint);
             }
             XFlush(_display);
             if (XEventsQueued(_display, 0) > 0 || !_posted.IsEmpty) continue;
@@ -147,6 +147,13 @@ sealed unsafe class X11Host : IPlatform
             LibC.poll(fds, 2, _dirty ? 0 : NextTimerTimeout());
             if ((fds[1].Revents & LibC.POLLIN) != 0) LibC.read(_wakePipe[0], drain, 64);
         }
+    }
+
+    /// <summary>An unexpected error is logged and the app keeps running, as on Windows and macOS.</summary>
+    static void Guard(Action action)
+    {
+        try { action(); }
+        catch (Exception ex) { ErrorLog.Write(ex); }
     }
 
     int NextTimerTimeout()

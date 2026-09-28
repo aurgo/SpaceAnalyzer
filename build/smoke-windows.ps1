@@ -33,8 +33,17 @@ function Save-Screen([string]$Name) {
     $bmp.Dispose()
 }
 
+# The app keeps running after an unexpected error (it shows a message): it also writes it here.
+$errorLog = Join-Path (Resolve-Path $Out) "windows-errors.log"
+Remove-Item $errorLog -ErrorAction Ignore
+$env:SPACEANALYZER_ERROR_LOG = $errorLog
+
 function Assert-Running([string]$Step) {
     if ($app.HasExited) { throw "SpaceAnalyzer exited $Step (exit code $($app.ExitCode))" }
+    if (Test-Path $errorLog) {
+        Save-Screen "windows-error.png"
+        throw "SpaceAnalyzer reported an error $($Step):`n$(Get-Content -Raw $errorLog)"
+    }
 }
 
 function Click([int]$X, [int]$Y, [int]$Times = 1, [switch]$Right) {

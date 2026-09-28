@@ -531,7 +531,7 @@ sealed unsafe class MacHost : IPlatform
         _view.OnResize(w, h, _backing);
     }
 
-    static void Report(Exception ex) => Console.Error.WriteLine("SpaceAnalyzer: " + ex);
+    static void Report(Exception ex) => ErrorLog.Write(ex);
 
     // =====================================================================================
     // IPlatform

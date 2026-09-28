@@ -15,6 +15,10 @@ XVFB=$!
 export DISPLAY=:99
 sleep 2
 
+# The app keeps running after an unexpected error: it also writes it here.
+export SPACEANALYZER_ERROR_LOG="$PWD/$OUT/linux-errors.log"
+rm -f "$SPACEANALYZER_ERROR_LOG"
+
 "$EXE" "$FOLDER" > "$OUT/linux-app.log" 2>&1 &
 APP=$!
 
@@ -23,6 +27,13 @@ alive() {
     echo "SpaceAnalyzer exited $1"
     cat "$OUT/linux-app.log"
     kill "$XVFB" || true
+    exit 1
+  fi
+  if [ -s "$SPACEANALYZER_ERROR_LOG" ]; then
+    echo "SpaceAnalyzer reported an error $1:"
+    cat "$SPACEANALYZER_ERROR_LOG"
+    import -window root "$OUT/linux-error.png" || true
+    kill "$APP" "$XVFB" || true
     exit 1
   fi
 }

@@ -307,6 +307,52 @@ public class MainViewTests
         Assert.NotNull(v.ToastText);
     }
 
+    /// <summary>
+    /// Zooms into every folder of the demo tree in a small window (like a 1024×768 screen) and paints it:
+    /// every sidebar/legend combination (1, 2, 3... file types, few or many files) must lay out.
+    /// </summary>
+    [Fact]
+    public void Every_folder_paints_in_a_small_window()
+    {
+        var (v, _, s) = Create(1024, 700);
+        var folders = new List<FileNode>();
+        var stack = new Stack<FileNode>([v.RootNode!]);
+        while (stack.Count > 0)
+            foreach (var c in stack.Pop().Children)
+                if (c.IsDirectory) { folders.Add(c); stack.Push(c); }
+
+        foreach (var folder in folders)
+        {
+            v.DebugNavigate(folder);
+            Paint(v, s);
+            v.DebugSelect(folder.Children.FirstOrDefault());
+            Paint(v, s);
+        }
+        Assert.True(folders.Count > 80);
+    }
+
+    [Theory]
+    [InlineData(320, 240)]
+    [InlineData(640, 400)]
+    [InlineData(900, 600)]
+    public void Tiny_windows_do_not_break_the_layout(int w, int h)
+    {
+        var (v, _, s) = Create(w, h);
+        v.OnMouseMove(w / 3f, h / 2f);
+        v.DebugHoverCard();
+        Paint(v, s);
+        v.DebugDialog("trash");
+        Paint(v, s);
+        v.OnKeyDown(Key.Escape, Mods.None);
+        v.Execute(Cmd.OpenMenu);
+        Paint(v, s);
+        v.OnKeyDown(Key.Escape, Mods.None);
+        v.Execute(Cmd.Home);
+        Paint(v, s);
+        v.DebugShowScanning("/Users/demo", 12, 3, 4096);
+        Paint(v, s);
+    }
+
     [Fact]
     public void Every_screen_and_mode_paints_in_both_themes_and_languages()
     {

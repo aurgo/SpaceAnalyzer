@@ -369,7 +369,7 @@ public sealed partial class MainView
         w = Math.Max(w, c.MeasureText(line2, fLine));
         if (line3 is not null) w = Math.Max(w, c.MeasureText(line3, fSmall));
         if (path is not null) w = Math.Max(w, Math.Min(c.MeasureText(path, fSmall), 360 * S));
-        w = Math.Clamp(w + pad * 2, 220 * S, maxW);
+        w = Math.Clamp(w + pad * 2, Math.Min(220 * S, maxW), maxW);
         float lineH = 19 * S;
         float h = pad * 2 + 22 * S + lineH * 2 + (line3 is not null ? lineH : 0) + (path is not null ? lineH + 4 * S : 0);
 
