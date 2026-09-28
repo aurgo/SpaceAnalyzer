@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <Version>1.0.0</Version>
+    <Product>SpaceAnalizer</Product>
+    <Description>Modern, tiny, portable disk space visualizer inspired by the classic SpaceMonger.</Description>
+    <Copyright>© 2026 SpaceAnalizer contributors</Copyright>
+  </PropertyGroup>
+</Project>
