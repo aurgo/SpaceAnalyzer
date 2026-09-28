@@ -1,0 +1,128 @@
+name: Release
+
+# Pushing a tag like v1.2.3 builds every download on its own OS and publishes a GitHub release.
+# Run it by hand (Actions > Release > Run workflow) to build everything without publishing.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows (x64 + ARM64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Build
+        shell: bash
+        run: |
+          dotnet publish src/SpaceAnalyzer -c Release -r win-x64 -p:PublishAot=true -o out/win-x64
+          dotnet publish src/SpaceAnalyzer -c Release -r win-arm64 -p:PublishAot=true -o out/win-arm64
+          dotnet publish src/SpaceAnalyzer -c Release -r win-x64 -o out/win-x64-mini
+          mkdir dist
+          cp out/win-x64/SpaceAnalyzer.exe dist/SpaceAnalyzer-windows-x64.exe
+          cp out/win-arm64/SpaceAnalyzer.exe dist/SpaceAnalyzer-windows-arm64.exe
+          cp out/win-x64-mini/SpaceAnalyzer.exe dist/SpaceAnalyzer-windows-x64-mini.exe
+          ls -l dist
+      - name: Smoke test
+        run: ./dist/SpaceAnalyzer-windows-x64.exe --snapshot check.png --demo --size 800x600 --scale 1
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-windows
+          path: dist/
+
+  linux:
+    name: Linux (${{ matrix.rid }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - { os: ubuntu-latest, rid: linux-x64 }
+          - { os: ubuntu-24.04-arm, rid: linux-arm64 }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Build
+        run: |
+          dotnet publish src/SpaceAnalyzer -c Release -r ${{ matrix.rid }} -p:PublishAot=true -o out
+          ./out/SpaceAnalyzer --snapshot check.png --demo --size 800x600 --scale 1
+          mkdir dist
+          tar -czf dist/SpaceAnalyzer-${{ matrix.rid }}.tar.gz -C out SpaceAnalyzer
+          ls -l out/SpaceAnalyzer dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-${{ matrix.rid }}
+          path: dist/
+
+  macos:
+    name: macOS (universal)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Build
+        run: |
+          ./build/macos-app.sh --aot --universal
+          lipo -info artifacts/SpaceAnalyzer.app/Contents/MacOS/SpaceAnalyzer
+          ./artifacts/SpaceAnalyzer.app/Contents/MacOS/SpaceAnalyzer --snapshot check.png --demo --size 800x600 --scale 1
+          mkdir dist
+          ditto -c -k --keepParent artifacts/SpaceAnalyzer.app dist/SpaceAnalyzer-macos.zip
+          ls -l dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-macos
+          path: dist/
+
+  mini:
+    name: Mini builds (need .NET 10)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Build
+        run: |
+          for rid in win-x64 win-arm64 osx-arm64 osx-x64 linux-x64 linux-arm64; do
+            dotnet publish src/SpaceAnalyzer -c Release -r $rid -o mini/$rid
+          done
+          mkdir dist
+          (cd mini && zip -r -9 ../dist/SpaceAnalyzer-mini-dotnet10.zip .)
+          ls -l dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist-mini
+          path: dist/
+
+  release:
+    name: Publish the release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux, macos, mini]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -l dist
+          (cd dist && sha256sum * > SHA256SUMS.txt)
+          gh release create "$TAG" dist/* --title "SpaceAnalyzer ${TAG#v}" --notes-file build/release-notes.md
