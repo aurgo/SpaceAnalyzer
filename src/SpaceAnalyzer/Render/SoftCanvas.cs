@@ -294,31 +294,36 @@ public sealed class SoftCanvas : ICanvas
         }
     }
 
+    /// <summary>
+    /// Soft drop shadow: the card's shape moved a little down and blurred (a smooth fall-off of the signed
+    /// distance). Only pixels the card itself will not cover are touched.
+    /// </summary>
     public void DrawShadow(RectF r, float radius, float blur, Color c)
     {
-        if (c.A == 0 || blur <= 0) return;
-        float oy = blur * 0.3f;
-        float x0 = r.X, y0 = r.Y + oy, x1 = r.Right, y1 = r.Bottom + oy;
+        if (c.A == 0 || blur <= 0 || r.IsEmpty) return;
         float rad = MathF.Min(radius, MathF.Min(r.W, r.H) / 2);
-        float cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, bx = r.W / 2, by = r.H / 2;
-        var (ix0, iy0, ix1, iy1) = ClipBounds(x0 - blur, y0 - blur, x1 + blur, y1 + blur);
-        var baseColor = c.WithAlpha((byte)255);
-        uint src = Px.Premul(baseColor);
-        float strength = c.A / 255f * 0.75f;
+        float bx = r.W / 2, by = r.H / 2;
+        float cx = r.CenterX, cy = r.CenterY;   // the card
+        float oy = blur * 0.3f;                 // the shadow's offset
+        float inner = blur * 0.35f;             // the fall-off starts a little inside the shape
+        var (ix0, iy0, ix1, iy1) = ClipBounds(r.X - blur, r.Y + oy - blur, r.Right + blur, r.Bottom + oy + blur);
+        uint src = Px.Premul(c.WithAlpha((byte)255));
+        float strength = c.A / 255f * 0.8f;
         for (int y = iy0; y < iy1; y++)
         {
             float py = y + 0.5f;
-            bool inner = py > y0 + rad + 1 && py < y1 - rad - 1;
-            int skipA = inner ? (int)MathF.Ceiling(x0 + 1) : int.MaxValue, skipB = inner ? (int)MathF.Floor(x1 - 1) : int.MinValue;
+            bool cardRow = py > r.Y + rad + 1 && py < r.Bottom - rad - 1;
+            int skipA = cardRow ? (int)MathF.Ceiling(r.X + 1) : int.MaxValue, skipB = cardRow ? (int)MathF.Floor(r.Right - 1) : int.MinValue;
             for (int x = ix0; x < ix1; x++)
             {
                 if (x >= skipA && x < skipB) { x = skipB - 1; continue; }
-                float d = SdRoundBox(x + 0.5f - cx, py - cy, bx, by, rad);
-                if (d < -1) continue; // hidden under the card
-                float t = (d + 1) / (blur + 1);
+                float px = x + 0.5f;
+                if (SdRoundBox(px - cx, py - cy, bx, by, rad) < -1) continue; // the card will cover it
+                float d = SdRoundBox(px - cx, py - cy - oy, bx, by, rad);
+                float t = (d + inner) / (blur + inner);
                 if (t >= 1) continue;
-                float a = 1 - t;
-                Plot(x, y, src, a * a * a * strength);
+                float a = t <= 0 ? 1 : 1 - t;
+                Plot(x, y, src, a * a * strength);
             }
         }
     }

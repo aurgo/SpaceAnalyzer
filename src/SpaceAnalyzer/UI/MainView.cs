@@ -132,9 +132,13 @@ public sealed partial class MainView
         if (_searchBox.Text != text) _searchBox.SetText(text);
         if (text == _search) return;
         _search = text;
+        _searchPending = text.Length > 0;
         P.StartTimer(TimerSearch, 160);
         P.Invalidate();
     }
+
+    /// <summary>The search text changed and the results have not been recomputed yet (debounced).</summary>
+    bool _searchPending;
 
     public void OnFilesDropped(IReadOnlyList<string> paths)
     {
@@ -190,6 +194,8 @@ public sealed partial class MainView
             case TimerSearch:
                 P.StopTimer(TimerSearch);
                 _layoutDirty = true;
+                _searchPending = false;
+                UpdateSearchStats();
                 P.Invalidate();
                 break;
             case TimerCaret:
@@ -818,6 +824,8 @@ public sealed partial class MainView
     {
         _search = "";
         _searchBox.SetText("");
+        _searchCount = _searchBytes = 0;
+        _searchPending = false;
         _layoutDirty = true;
     }
 
@@ -829,9 +837,40 @@ public sealed partial class MainView
         P.SetTitle(title);
     }
 
+    /// <summary>Refreshes what depends on the current view: the largest files and the search results.</summary>
     void UpdateLargest()
     {
         _largest = _view is null ? [] : LargestFiles(_view, 40);
+        UpdateSearchStats();
+    }
+
+    long _searchCount, _searchBytes;
+
+    /// <summary>
+    /// How many items in the current view match the search, and how much they take. A matching folder counts
+    /// once with everything inside it (the treemap lights up its whole contents too).
+    /// </summary>
+    void UpdateSearchStats()
+    {
+        _searchCount = _searchBytes = 0;
+        if (_view is null || _search.Length == 0) return;
+        var stack = new Stack<FileNode>();
+        stack.Push(_view);
+        while (stack.Count > 0)
+        {
+            foreach (var c in stack.Pop().Children)
+            {
+                if (c.Name.Contains(_search, StringComparison.OrdinalIgnoreCase))
+                {
+                    _searchCount++;
+                    _searchBytes += c.Size;
+                }
+                else if (c.IsDirectory)
+                {
+                    stack.Push(c);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -991,6 +1030,7 @@ public sealed partial class MainView
     internal void DebugToast(string text) => ShowToast(text);
     internal bool IsAnimating => _anim;
     internal string SearchText => _search;
+    internal long SearchCount => _searchCount;
     internal bool SearchFocused => _searchBox.Focused;
     internal bool MenuOpen => _popup is not null;
     internal string? ToastText => _toast;

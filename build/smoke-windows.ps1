@@ -1,10 +1,10 @@
 # Runs SpaceAnalyzer on a real Windows desktop (e.g. a GitHub Actions runner): checks that it starts and
 # survives mouse and keyboard input, and saves a screenshot after each step.
 #
-#   pwsh ./build/smoke-windows.ps1 -Exe publish/SpaceAnalyzer.exe -Folder "C:\Program Files\dotnet"
+#   pwsh ./build/smoke-windows.ps1 -Exe publish/SpaceAnalyzer.exe -Folder "C:\Program Files\dotnet\shared"
 param(
     [string]$Exe = "publish/SpaceAnalyzer.exe",
-    [string]$Folder = "C:\Program Files\dotnet",
+    [string]$Folder = "C:\Program Files\dotnet\shared",
     [string]$Out = "screenshots"
 )
 $ErrorActionPreference = "Stop"
@@ -37,10 +37,37 @@ function Assert-Running([string]$Step) {
     if ($app.HasExited) { throw "SpaceAnalyzer exited $Step (exit code $($app.ExitCode))" }
 }
 
+function Click([int]$X, [int]$Y, [int]$Times = 1, [switch]$Right) {
+    [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point($X, $Y)
+    Start-Sleep -Milliseconds 150
+    $down = if ($Right) { 0x0008 } else { 0x0002 }
+    $up = if ($Right) { 0x0010 } else { 0x0004 }
+    for ($i = 0; $i -lt $Times; $i++) {
+        [SaInput]::mouse_event($down, 0, 0, 0, [UIntPtr]::Zero)
+        [SaInput]::mouse_event($up, 0, 0, 0, [UIntPtr]::Zero)
+        Start-Sleep -Milliseconds 60
+    }
+}
+
 $app = Start-Process -FilePath $Exe -ArgumentList "`"$Folder`"" -PassThru
-Start-Sleep -Seconds 15
-Assert-Running "while starting and scanning"
-$app.Refresh()
+Start-Sleep -Seconds 2
+Assert-Running "while starting"
+Save-Screen "windows-0-scanning.png"
+
+# The title becomes "<folder> — SpaceAnalyzer" once the scan is done.
+$dash = [char]0x2014
+$deadline = (Get-Date).AddSeconds(180)
+do {
+    Start-Sleep -Milliseconds 500
+    Assert-Running "while scanning"
+    $app.Refresh()
+} until ($app.MainWindowTitle.Contains($dash) -or (Get-Date) -gt $deadline)
+if (-not $app.MainWindowTitle.Contains($dash)) {
+    Save-Screen "windows-timeout.png"
+    throw "The scan did not finish in time"
+}
+Start-Sleep -Milliseconds 800
+
 $hwnd = $app.MainWindowHandle
 [SaInput]::SetForegroundWindow($hwnd) | Out-Null
 $r = New-Object SaInput+RECT
@@ -50,32 +77,36 @@ Save-Screen "windows-1-treemap.png"
 
 # Hover the treemap: the info card appears after a short pause.
 $x = [int]($r.Left + ($r.Right - $r.Left) * 0.3)
-$y = [int]($r.Top + ($r.Bottom - $r.Top) * 0.5)
+$y = [int]($r.Top + ($r.Bottom - $r.Top) * 0.55)
 [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point($x, $y)
 Start-Sleep -Milliseconds 1500
 Save-Screen "windows-2-hover.png"
 Assert-Running "after moving the mouse"
 
 # Double-click: zoom into the folder under the pointer (animated).
-for ($i = 0; $i -lt 2; $i++) {
-    [SaInput]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero) # left button down
-    [SaInput]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero) # left button up
-    Start-Sleep -Milliseconds 60
-}
+Click $x $y -Times 2
 Start-Sleep -Milliseconds 1200
 Save-Screen "windows-3-zoomed.png"
 Assert-Running "after a double-click"
 
-# Typing starts a search that highlights matches.
+# Typing starts a search that highlights matches (and shows how many there are).
 [System.Windows.Forms.SendKeys]::SendWait("dll")
-Start-Sleep -Milliseconds 1000
+Start-Sleep -Milliseconds 1200
 Save-Screen "windows-4-search.png"
 Assert-Running "after typing"
 
-# Backspace x3 clears the search, then Backspace goes back up a level.
-[System.Windows.Forms.SendKeys]::SendWait("{BACKSPACE}{BACKSPACE}{BACKSPACE}{ESC}{BACKSPACE}")
+# Right-click opens the context menu (drawn by the app); Escape closes it.
+[System.Windows.Forms.SendKeys]::SendWait("{ESC}{ESC}")
+Click $x $y -Right
+Start-Sleep -Milliseconds 800
+Save-Screen "windows-5-menu.png"
+[System.Windows.Forms.SendKeys]::SendWait("{ESC}")
+Assert-Running "after the context menu"
+
+# Backspace goes back up a level.
+[System.Windows.Forms.SendKeys]::SendWait("{BACKSPACE}")
 Start-Sleep -Milliseconds 1200
-Save-Screen "windows-5-back.png"
+Save-Screen "windows-6-back.png"
 Assert-Running "after using the keyboard"
 
 Stop-Process -Id $app.Id -Force

@@ -51,7 +51,7 @@ jobs:
       - name: Run the app on a real Windows desktop
         if: runner.os == 'Windows'
         shell: pwsh
-        run: ./build/smoke-windows.ps1 -Exe publish/SpaceAnalyzer.exe -Folder "$env:DOTNET_ROOT"
+        run: ./build/smoke-windows.ps1 -Exe publish/SpaceAnalyzer.exe -Folder "$env:DOTNET_ROOT\shared"
 
       - name: Run the app on a virtual X server
         if: runner.os == 'Linux'

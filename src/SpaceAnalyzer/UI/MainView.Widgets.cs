@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using SpaceAnalyzer.Core;
 
 namespace SpaceAnalyzer.UI;
 
@@ -349,6 +350,23 @@ public sealed partial class MainView
         c.DrawIcon(Icons.Search, new RectF(box.X + 10 * S, box.CenterY - 8 * S, 16 * S, 16 * S), focused ? T.TextSecondary : T.TextMuted, 1.7f * S);
 
         float right = box.Right - (tb.Text.Length > 0 ? 30 * S : 10 * S);
+
+        // Results: "12 · 3,4 GB", or a red "0" when nothing matches.
+        string? results = null;
+        if (_search.Length > 0 && !_searchPending)
+            results = _searchCount == 0 ? "0" : $"{Fmt.Count(_searchCount)} · {Fmt.Size(_searchBytes)}";
+        if (results is not null)
+        {
+            var rf = F(11.5f, Weight.Medium);
+            float rw = c.MeasureText(results, rf);
+            if (right - rw - 8 * S - (box.X + 34 * S) >= 56 * S)
+            {
+                c.DrawText(results, RectF.FromLTRB(right - rw - 2 * S, box.Y, right, box.Bottom), rf,
+                    _searchCount == 0 ? T.Danger : T.TextMuted, TextAlign.Right, Trim.None);
+                right -= rw + 10 * S;
+            }
+        }
+
         _searchTextRect = RectF.FromLTRB(box.X + 34 * S, box.Y, right, box.Bottom);
         var tr = _searchTextRect;
         if (tb.Text.Length == 0 && !focused)
@@ -378,7 +396,9 @@ public sealed partial class MainView
             }
             c.PopClip();
         }
-        AddZone(ZSearch, box, null, focused ? null : Strings.WithKeys(Strings.SearchTip, Strings.Cmd + "F"), hand: false);
+        string? tip = results is not null ? Strings.SearchResults(_searchCount, Fmt.Size(_searchBytes))
+            : focused ? null : Strings.WithKeys(Strings.SearchTip, Strings.Cmd + "F");
+        AddZone(ZSearch, box, null, tip, hand: false);
         if (tb.Text.Length > 0)
         {
             var clear = new RectF(box.Right - 28 * S, box.CenterY - 11 * S, 22 * S, 22 * S);

@@ -38,6 +38,9 @@ public static class Strings
     public static string ZoomOut => T("Alejar", "Zoom out");
     public static string Search => T("Buscar", "Search");
     public static string SearchTip => T("Resaltar archivos por nombre", "Highlight files by name");
+    public static string SearchResults(long n, string size) => n == 0
+        ? T("Sin coincidencias en esta carpeta", "No matches in this folder")
+        : T($"{Fmt.Count(n)} {(n == 1 ? "coincidencia" : "coincidencias")} · {size}", $"{Fmt.Count(n)} {(n == 1 ? "match" : "matches")} · {size}");
     public static string MoreOptions => T("Más opciones", "More options");
     public static string Sidebar => T("Panel lateral", "Sidebar");
     public static string ColorType => T("Tipo", "Type");

@@ -241,6 +241,20 @@ public class MainViewTests
     }
 
     [Fact]
+    public void Search_counts_matches_in_the_current_view()
+    {
+        var (v, _, s) = Create();
+        v.OnSearchTextChanged("clip");
+        v.OnTimer(7); // the debounce timer
+        Assert.Equal(14, v.SearchCount); // "Clip 001.mov" ... "Clip 014.mov" in the demo tree
+        Paint(v, s);
+
+        v.OnSearchTextChanged("no-such-file");
+        v.OnTimer(7);
+        Assert.Equal(0, v.SearchCount);
+    }
+
+    [Fact]
     public void AltGr_characters_are_text_not_shortcuts()
     {
         var p = new HeadlessPlatform { IsMac = false };
