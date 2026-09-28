@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Windows, os: windows-latest, rid: win-x64, exe: SpaceAnalyzer.exe }
+          - { name: Linux, os: ubuntu-latest, rid: linux-x64, exe: SpaceAnalyzer }
+          - { name: macOS, os: macos-latest, rid: osx-arm64, exe: SpaceAnalyzer }
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Test
+        run: dotnet test SpaceAnalyzer.slnx -c Release
+
+      - name: Publish (single file, needs the .NET runtime)
+        run: dotnet publish src/SpaceAnalyzer -c Release -r ${{ matrix.rid }} -o publish
+
+      - name: Publish (Native AOT, no dependencies)
+        continue-on-error: true
+        run: dotnet publish src/SpaceAnalyzer -c Release -r ${{ matrix.rid }} -p:PublishAot=true -o publish-aot
+
+      - name: Sizes
+        shell: bash
+        run: ls -l publish publish-aot 2>/dev/null || true
+
+      - name: Render the UI to PNG (no window)
+        shell: bash
+        run: |
+          mkdir -p screenshots
+          ./publish/${{ matrix.exe }} --snapshot screenshots/${{ matrix.rid }}-snapshot.png --demo --size 1400x880 --scale 1
+
+      - name: Run the app on a real Windows desktop
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./build/smoke-windows.ps1 -Exe publish/SpaceAnalyzer.exe -Folder "$env:DOTNET_ROOT"
+
+      - name: Run the app on a virtual X server
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb imagemagick xdotool > /dev/null
+          ./build/smoke-linux.sh publish/SpaceAnalyzer "$DOTNET_ROOT"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: SpaceAnalyzer-${{ matrix.rid }}
+          path: |
+            publish/${{ matrix.exe }}
+            publish-aot/${{ matrix.exe }}
+            screenshots/
+          if-no-files-found: warn
