@@ -6,8 +6,8 @@
     <LangVersion>latest</LangVersion>
 
     <Version>1.0.0</Version>
-    <Product>SpaceAnalizer</Product>
+    <Product>SpaceAnalyzer</Product>
     <Description>Modern, tiny, portable disk space visualizer inspired by the classic SpaceMonger.</Description>
-    <Copyright>© 2026 SpaceAnalizer contributors</Copyright>
+    <Copyright>© 2026 SpaceAnalyzer contributors</Copyright>
   </PropertyGroup>
 </Project>

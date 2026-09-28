@@ -1,0 +1,128 @@
+<p align="center"><img src="docs/icon.png" width="96" height="96" alt="SpaceAnalyzer"></p>
+
+<h1 align="center">SpaceAnalyzer</h1>
+
+<p align="center">
+  <b>Descubre qué ocupa espacio en tu disco.</b><br>
+  Un visualizador de espacio en disco moderno, inspirado en el clásico SpaceMonger,<br>
+  en <b>un único ejecutable de ~500 KB</b>: sin instalación y sin frameworks de interfaz.
+</p>
+
+![SpaceAnalyzer: treemap de una carpeta personal coloreado por tipo de archivo](docs/screenshot.png)
+
+## Características
+
+- **Treemap anidado**, como SpaceMonger: cada carpeta es un bloque con su nombre y su tamaño, y dentro están sus archivos y subcarpetas en proporción a lo que ocupan. Usa el algoritmo *squarified*, que da bloques casi cuadrados, fáciles de comparar y de pulsar.
+- **Zoom**: doble clic para entrar en una carpeta (con animación), y rueda del ratón, pellizco o <kbd>Retroceso</kbd> para salir. Tiene migas de pan y los botones atrás, adelante y subir.
+- **Tres formas de colorear**:
+  - por **tipo** de archivo (vídeo, imágenes, audio, documentos, comprimidos, código, programas, datos);
+  - por **nivel** de carpeta, el aspecto clásico de SpaceMonger;
+  - por **antigüedad**, como mapa de calor: lo que no tocas desde hace años sale en frío.
+- **Panel lateral** con los detalles de la selección, el desglose por tipo (haz clic en un tipo para resaltarlo en el mapa) y los archivos más grandes.
+- **Búsqueda** por nombre, que resalta las coincidencias en el mapa. Basta con empezar a escribir.
+- **Acciones**: abrir, mostrar en Finder o en el Explorador, copiar la ruta, enviar a la papelera (con confirmación; el mapa se actualiza sin volver a escanear) y volver a escanear una subcarpeta.
+- Muestra el **espacio libre** de la unidad como un bloque más. Tiene niveles de detalle, tema claro, oscuro o del sistema, y está en español e inglés.
+- **Escaneo multihilo** con progreso en vivo. No sigue enlaces simbólicos ni entra en otros volúmenes, así que nada se cuenta dos veces. Usa el tamaño real en disco de los archivos dispersos, comprimidos o en la nube.
+
+| Inicio | Modo clásico (colores por nivel), tema claro |
+|---|---|
+| ![Pantalla de inicio con las unidades](docs/welcome.png) | ![Carpeta de imágenes coloreada por nivel](docs/classic.png) |
+
+## Un único archivo, de verdad
+
+- **Un solo ejecutable**: sin instalador, sin DLL al lado y sin paquetes NuGet. No usa WinForms, WPF, Avalonia ni MAUI.
+- **Todo se dibuja en C#**:
+  - un rasterizador propio, con formas suavizadas, degradados y sombras;
+  - la fuente **[Inter](https://rsms.me/inter/)** incrustada (unos 20 KB por grosor; la convierte [`tools/FontBaker.cs`](tools/FontBaker.cs));
+  - iconos vectoriales.
+
+  El resultado son los mismos píxeles en todos los sistemas.
+- **Capa mínima por sistema operativo**. Es lo único que depende de cada sistema: abre la ventana, recibe el ratón y el teclado, copia la imagen a la pantalla y usa los servicios del sistema (papelera, abrir archivos, selector de carpetas, portapapeles).
+  - Windows: Win32
+  - macOS: AppKit
+  - Linux: X11
+
+| Plataforma | Estado | Tamaño |
+|---|---|---|
+| macOS (Apple Silicon e Intel) | ✅ Funcional | ~450 KB |
+| Windows 10/11 | 🚧 En desarrollo (capa Win32) | ~500 KB |
+| Linux (X11) | 🚧 En desarrollo (capa X11) | ~400 KB |
+
+## Compilar y ejecutar
+
+Necesitas el [SDK de .NET 10](https://dotnet.microsoft.com/download).
+
+```bash
+dotnet run --project src/SpaceAnalyzer            # abre la ventana
+dotnet run --project src/SpaceAnalyzer -- ~/Downloads   # y analiza una carpeta directamente
+```
+
+Para generar el ejecutable único, elige una plataforma: `win-x64`, `win-arm64`, `osx-arm64`, `osx-x64`, `linux-x64` o `linux-arm64`. Este ejecutable necesita tener instalado el runtime de .NET 10:
+
+```bash
+dotnet publish src/SpaceAnalyzer -c Release -r win-x64
+```
+
+Si prefieres un ejecutable nativo, sin ninguna dependencia (pesa unos pocos MB), compílalo en el mismo sistema en el que lo vas a usar:
+
+```bash
+dotnet publish src/SpaceAnalyzer -c Release -r win-x64 -p:PublishAot=true
+```
+
+## Uso
+
+| Acción | Ratón | Teclado |
+|---|---|---|
+| Seleccionar | Clic | Flechas |
+| Entrar en una carpeta | Doble clic, rueda hacia delante | <kbd>Intro</kbd> |
+| Subir un nivel | Rueda hacia atrás, clic central | <kbd>Retroceso</kbd> (Win), <kbd>⌘↑</kbd> (Mac) |
+| Atrás / adelante | Botones laterales del ratón | <kbd>Alt+←/→</kbd> (Win), <kbd>⌘[</kbd> / <kbd>⌘]</kbd> (Mac) |
+| Menú contextual | Clic derecho | |
+| Buscar | | Empieza a escribir, o <kbd>Ctrl/⌘+F</kbd> |
+| Copiar la ruta | | <kbd>Ctrl/⌘+C</kbd> |
+| Enviar a la papelera | | <kbd>Supr</kbd> (Win), <kbd>⌘⌫</kbd> (Mac) |
+| Colorear por tipo, nivel o antigüedad | Botones de la barra | <kbd>Ctrl/⌘+1</kbd>, <kbd>2</kbd>, <kbd>3</kbd> |
+| Volver a escanear | | <kbd>F5</kbd>, <kbd>⌘R</kbd> |
+
+También puedes arrastrar una carpeta a la ventana.
+
+## Capturas sin ventana
+
+El programa puede renderizar su interfaz a PNG sin abrir ninguna ventana, en cualquier sistema. Es útil para revisar el diseño; así se han hecho las capturas de este README:
+
+```bash
+SpaceAnalyzer --snapshot salida.png --demo --size 1400x880 --scale 2 --theme light --mode depth
+SpaceAnalyzer --snapshot salida.png ~/Downloads     # con una carpeta real
+```
+
+La opción `--demo` usa una carpeta personal inventada, así que en las capturas no aparece ningún dato tuyo.
+
+## Estructura del código
+
+```
+src/SpaceAnalyzer/
+  Core/       escaneo, árbol de archivos, algoritmo squarified, formatos (sin interfaz)
+  Render/     rasterizador, motor de texto, fuente Inter incrustada, PNG
+  UI/         toda la interfaz, independiente del sistema operativo
+  Platform/   capas mínimas: Windows (Win32), MacOS (AppKit), Linux (X11)
+tools/
+  FontBaker.cs   convierte una fuente TTF al formato compacto .saf
+```
+
+## Licencia
+
+[MIT](LICENSE) © 2026 Armando.
+
+Incluye la fuente Inter (SIL Open Font License 1.1) e iconos basados en Lucide (ISC). Los avisos completos están en [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+---
+
+### In English
+
+**SpaceAnalyzer** is a modern disk space visualizer inspired by the classic SpaceMonger, in **one ~500 KB executable**. It shows a nested *squarified* treemap that you can zoom, color by file type, folder depth or age, search, and use to open files or move them to the trash.
+
+There is no UI framework. Everything, including shapes, text with the embedded Inter font, and icons, is drawn by a small software renderer written in C#. Each operating system only needs a thin layer that opens the window and forwards input: Win32, AppKit or X11.
+
+The macOS version works today. The Windows and Linux layers are in progress.
+
+Build it with `dotnet publish src/SpaceAnalyzer -c Release -r <rid>`.

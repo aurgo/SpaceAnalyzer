@@ -1,4 +1,4 @@
-// FontBaker: converts a TrueType font into SpaceAnalizer's tiny embedded font format (.saf).
+// FontBaker: converts a TrueType font into SpaceAnalyzer's tiny embedded font format (.saf).
 //
 //   dotnet run tools/FontBaker.cs -- <input.ttf> <output.saf>
 //
