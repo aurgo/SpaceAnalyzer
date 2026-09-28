@@ -69,3 +69,22 @@ jobs:
             publish-aot/${{ matrix.exe }}
             screenshots/
           if-no-files-found: warn
+
+  website:
+    name: Website is up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Generate docs/ from site/index.html
+        run: |
+          dotnet run tools/SiteGen.cs
+          if [ -n "$(git status --porcelain -- docs)" ]; then
+            git status --short -- docs
+            echo "::error::docs/ is out of date: run 'dotnet run tools/SiteGen.cs' and commit the result"
+            exit 1
+          fi

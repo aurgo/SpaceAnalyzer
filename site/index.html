@@ -1,0 +1,958 @@
+<!doctype html>
+<html lang="[[es||en]]">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>[[SpaceAnalyzer — Analizador de espacio en disco gratis y portable||SpaceAnalyzer — Free disk space analyzer for Windows, Mac &amp; Linux]]</title>
+<meta name="description" content="[[Descubre qué ocupa tu disco con un mapa de bloques y libera espacio en segundos. Gratis, sin instalación y en un solo archivo de ~2 MB para Windows, macOS y Linux.||See what fills up your disk as a map of blocks and free up space in seconds. Free, no installer, one ~2 MB file for Windows, macOS and Linux.]]">
+<link rel="canonical" href="{{site}}[[||en/]]">
+<link rel="alternate" hreflang="es" href="{{site}}">
+<link rel="alternate" hreflang="en" href="{{site}}en/">
+<link rel="alternate" hreflang="x-default" href="{{site}}en/">
+<meta name="robots" content="max-image-preview:large">
+<meta name="author" content="Armando">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0c0e12" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f6f9" media="(prefers-color-scheme: light)">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon.png" type="image/png" sizes="256x256">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SpaceAnalyzer">
+<meta property="og:locale" content="[[es_ES||en_US]]">
+<meta property="og:locale:alternate" content="[[en_US||es_ES]]">
+<meta property="og:url" content="{{site}}[[||en/]]">
+<meta property="og:title" content="[[SpaceAnalyzer — Mira tu disco entero. Libera espacio en segundos.||SpaceAnalyzer — See your whole disk. Free up space in seconds.]]">
+<meta property="og:description" content="[[Analizador de espacio en disco gratis y de código abierto. Un único archivo de ~2 MB para Windows, macOS y Linux, inspirado en el clásico SpaceMonger.||A free, open-source disk space analyzer. One ~2 MB file for Windows, macOS and Linux, inspired by the classic SpaceMonger.]]">
+<meta property="og:image" content="{{site}}img/og-[[es||en]].jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="[[SpaceAnalyzer muestra un disco como un mapa de bloques de colores||SpaceAnalyzer showing a disk as a map of colored blocks]]">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "SpaceAnalyzer",
+  "url": "{{site}}[[||en/]]",
+  "description": "[[Analizador de espacio en disco que dibuja un disco o una carpeta como un mapa de bloques anidados (treemap), como el clásico SpaceMonger, para ver al instante qué ocupa espacio y liberarlo.||Disk space analyzer that draws a drive or folder as a nested treemap, like the classic SpaceMonger, so you can see at once what takes up space and free it up.]]",
+  "applicationCategory": "UtilitiesApplication",
+  "applicationSubCategory": "[[Analizador de espacio en disco||Disk space analyzer]]",
+  "operatingSystem": "Windows 10, Windows 11, macOS 12+, Linux",
+  "softwareVersion": "{{version}}",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+  "isAccessibleForFree": true,
+  "license": "https://opensource.org/licenses/MIT",
+  "downloadUrl": "https://github.com/aurgo/SpaceAnalyzer/releases/latest",
+  "image": "{{site}}icon.png",
+  "screenshot": "{{site}}img/[[||en/]]hero-2x.webp",
+  "featureList": "[[Mapa de bloques anidado, zoom animado, colores por tipo, nivel o antigüedad, búsqueda instantánea, archivos más grandes, enviar a la papelera, tema claro y oscuro, español e inglés||Nested treemap, animated zoom, colors by file type, folder depth or age, instant search, largest files, move to trash, light and dark themes, English and Spanish]]",
+  "inLanguage": ["es", "en"],
+  "author": { "@type": "Person", "name": "Armando", "url": "https://github.com/aurgo" },
+  "sameAs": ["https://github.com/aurgo/SpaceAnalyzer"]
+}
+</script>
+<!--faq-->
+<style>
+  :root {
+    --bg: #0c0e12; --bg2: #11141a; --surface: #171a21; --surface2: #1f232b; --border: #262a33; --border2: #323744;
+    --text: #eef0f4; --text2: #a9afbd; --muted: #717889;
+    --accent: #7b6ef6; --accent2: #9a8fff; --pink: #ff6b8b; --yellow: #ffd166; --teal: #4fd1c5;
+    --glow: rgba(123, 110, 246, .28); --shadow: 0 40px 90px -20px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .05);
+    --grid: rgba(255, 255, 255, .035);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f5f6f9; --bg2: #eceef3; --surface: #fff; --surface2: #f4f5f8; --border: #e2e5ea; --border2: #d3d7df;
+      --text: #15171c; --text2: #4d5363; --muted: #858b99;
+      --accent: #6556e8; --accent2: #7b6ef6;
+      --glow: rgba(101, 86, 232, .18); --shadow: 0 40px 80px -24px rgba(24, 28, 45, .28), 0 0 0 1px rgba(0, 0, 0, .06);
+      --grid: rgba(0, 0, 0, .04);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.6 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  img { max-width: 100%; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .center { text-align: center; }
+  .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  /* ---------- language hint ---------- */
+  .langhint { background: var(--surface); border-bottom: 1px solid var(--border); color: var(--text2); font-size: 14.5px; }
+  .langhint .wrap { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 14px; min-height: 46px; padding-top: 6px; padding-bottom: 6px; }
+  .langhint a { color: var(--accent2); font-weight: 650; text-decoration: none; }
+  .langhint a:hover { text-decoration: underline; }
+  .langhint button { font: inherit; font-size: 22px; line-height: 1; color: var(--muted); background: none; border: 0; padding: 2px 8px; border-radius: 7px; cursor: pointer; }
+  .langhint button:hover { color: var(--text); background: var(--surface2); }
+
+  /* ---------- navigation ---------- */
+  .nav { position: sticky; top: 0; z-index: 50; backdrop-filter: saturate(170%) blur(16px); -webkit-backdrop-filter: saturate(170%) blur(16px);
+    background: color-mix(in srgb, var(--bg) 75%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent); }
+  .nav .wrap { display: flex; align-items: center; gap: 16px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 750; font-size: 17px; letter-spacing: -.015em; text-decoration: none; }
+  .brand svg { width: 30px; height: 30px; }
+  .links { display: flex; gap: 2px; margin-left: 18px; }
+  .links a, .navbtn { font: inherit; font-size: 14.5px; color: var(--text2); text-decoration: none; padding: 8px 12px; border-radius: 9px;
+    background: none; border: 0; cursor: pointer; }
+  .links a:hover, .navbtn:hover { color: var(--text); background: var(--surface2); }
+  .navright { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .navbtn.lang { border: 1px solid var(--border2); font-weight: 650; font-size: 13px; padding: 6px 10px; }
+  .navcta { font-size: 14px; font-weight: 650; padding: 9px 16px; border-radius: 10px; text-decoration: none; background: var(--accent); color: #fff; }
+  .navcta:hover { background: var(--accent2); }
+  @media (max-width: 860px) { .links { display: none; } }
+  @media (max-width: 480px) { .navright .gh { display: none; } }
+
+  /* ---------- buttons ---------- */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 15px 26px; border-radius: 13px;
+    font-weight: 650; font-size: 16.5px; text-decoration: none; border: 1px solid transparent; transition: transform .15s, background .15s, box-shadow .2s; }
+  .btn svg { width: 20px; height: 20px; flex: none; }
+  .btn.primary { background: linear-gradient(180deg, var(--accent2), var(--accent)); color: #fff;
+    box-shadow: 0 14px 34px -8px color-mix(in srgb, var(--accent) 70%, transparent), inset 0 1px 0 rgba(255, 255, 255, .2); }
+  .btn.primary:hover { transform: translateY(-2px); box-shadow: 0 18px 40px -8px color-mix(in srgb, var(--accent) 80%, transparent), inset 0 1px 0 rgba(255, 255, 255, .25); }
+  .btn.ghost { background: var(--surface); border-color: var(--border2); color: var(--text); }
+  .btn.ghost:hover { background: var(--surface2); transform: translateY(-1px); }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; padding: 84px 0 0; overflow: hidden; }
+  .hero::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 44px 44px; mask-image: radial-gradient(70% 60% at 50% 30%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(70% 60% at 50% 30%, #000 30%, transparent 75%); }
+  .hero::after { content: ""; position: absolute; left: 50%; top: -160px; width: 1100px; height: 700px; transform: translateX(-50%); pointer-events: none;
+    background: radial-gradient(40% 50% at 35% 45%, var(--glow), transparent 70%), radial-gradient(35% 45% at 70% 40%, rgba(255, 107, 139, .14), transparent 70%); }
+  .hero > .wrap { position: relative; z-index: 1; text-align: center; }
+  .pill { display: inline-flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 550; color: var(--text2);
+    background: color-mix(in srgb, var(--surface) 80%, transparent); border: 1px solid var(--border2); padding: 6px 14px 6px 8px; border-radius: 999px; }
+  .pill .tag { background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; }
+  h1 { font-size: clamp(40px, 6.6vw, 76px); line-height: 1.02; letter-spacing: -.045em; font-weight: 850; margin: 26px auto 22px; max-width: 980px; }
+  h1 .grad { display: block; background: linear-gradient(92deg, var(--accent2) 10%, var(--pink) 55%, var(--yellow) 95%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .06em; }
+  .lead { font-size: clamp(17px, 2vw, 20.5px); color: var(--text2); max-width: 760px; margin: 0 auto 36px; }
+  .cta { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .micro { display: flex; justify-content: center; gap: 8px 22px; flex-wrap: wrap; margin: 20px 0 0; color: var(--muted); font-size: 14px; }
+  .micro span::before { content: "✓"; color: #3cc47c; font-weight: 800; margin-right: 7px; }
+
+  .stage { position: relative; margin: 64px auto 0; max-width: 1120px; }
+  .window { border-radius: 14px; overflow: hidden; background: #0b0c10; box-shadow: var(--shadow); }
+  .window .bar { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; background: #15171c; border-bottom: 1px solid #22252d; }
+  .window .bar i { width: 12px; height: 12px; border-radius: 50%; }
+  .window .bar i:nth-child(1) { background: #ff5f57; } .window .bar i:nth-child(2) { background: #febc2e; } .window .bar i:nth-child(3) { background: #28c840; }
+  .window .bar span { margin: 0 auto; transform: translateX(-26px); color: #8b91a0; font-size: 13px; font-weight: 550; }
+  .window img { display: block; width: 100%; height: auto; }
+  .chip { position: absolute; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 14px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border2); box-shadow: 0 20px 40px -12px rgba(0, 0, 0, .45); font-size: 14px; text-align: left; animation: float 6s ease-in-out infinite; z-index: 2; }
+  .chip b { display: block; font-size: 15px; color: var(--text); }
+  .chip small { color: var(--text2); font-size: 13px; }
+  .chip .sq { width: 34px; height: 34px; border-radius: 9px; flex: none; display: grid; place-items: center; color: #fff; }
+  .chip .sq svg { width: 19px; height: 19px; }
+  .chip.a { left: -46px; top: 22%; }
+  .chip.b { right: -40px; bottom: 16%; animation-delay: -3s; }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @media (max-width: 1240px) { .chip.a { left: 12px; } .chip.b { right: 12px; } }
+  @media (max-width: 760px) { .chip { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .chip { animation: none; } html { scroll-behavior: auto; } }
+
+  /* ---------- trust strip ---------- */
+  .trust { padding: 56px 0 8px; }
+  .trust .wrap { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 34px; color: var(--text2); font-size: 15px; font-weight: 550; }
+  .trust span { display: inline-flex; align-items: center; gap: 9px; }
+  .trust svg { width: 20px; height: 20px; color: var(--text); opacity: .85; }
+
+  /* ---------- sections ---------- */
+  section.block { padding: 110px 0 0; }
+  .kicker { display: inline-block; color: var(--accent2); font-weight: 750; font-size: 13px; letter-spacing: .09em; text-transform: uppercase; }
+  h2 { font-size: clamp(32px, 4.2vw, 50px); letter-spacing: -.035em; line-height: 1.08; font-weight: 800; margin: 12px 0 16px; }
+  .sub { color: var(--text2); font-size: 19px; max-width: 720px; margin: 0 auto 52px; }
+
+  /* steps */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: left; }
+  @media (max-width: 900px) { .steps { grid-template-columns: 1fr; } }
+  .step { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; }
+  .step .txt { padding: 24px 24px 20px; }
+  .step .n { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; font-weight: 800; font-size: 15px; color: #fff;
+    background: linear-gradient(135deg, var(--accent2), var(--accent)); margin-bottom: 14px; }
+  .step h3 { margin: 0 0 6px; font-size: 19px; letter-spacing: -.015em; }
+  .step p { margin: 0; color: var(--text2); font-size: 15px; }
+  .step .pic { margin-top: auto; padding: 0 0 0 24px; }
+  .step .pic img { display: block; width: 100%; border-radius: 10px 0 0 0; border: 1px solid var(--border2); border-right: 0; border-bottom: 0;
+    aspect-ratio: 16 / 10; object-fit: cover; object-position: 0 0; }
+
+  /* feature rows */
+  .feature { display: grid; grid-template-columns: 1fr 1.25fr; gap: 64px; align-items: center; padding: 70px 0; }
+  .feature.flip { grid-template-columns: 1.25fr 1fr; }
+  .feature.flip .copy { order: 2; }
+  @media (max-width: 960px) { .feature, .feature.flip { grid-template-columns: 1fr; gap: 32px; padding: 44px 0; } .feature.flip .copy { order: 0; } }
+  .copy h3 { font-size: clamp(26px, 3vw, 36px); letter-spacing: -.03em; line-height: 1.12; margin: 10px 0 14px; font-weight: 800; }
+  .copy p { color: var(--text2); font-size: 17px; margin: 0 0 18px; }
+  .copy ul { list-style: none; padding: 0; margin: 0; }
+  .copy li { position: relative; padding-left: 30px; margin: 10px 0; color: var(--text2); font-size: 15.5px; }
+  .copy li::before { content: ""; position: absolute; left: 0; top: .3em; width: 18px; height: 18px; border-radius: 6px;
+    background: color-mix(in srgb, var(--accent) 22%, transparent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a8fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 12px no-repeat; }
+  .shot { position: relative; border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); cursor: zoom-in; background: #0b0c10; }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot.plain { border-radius: 10px; }
+  .caption { color: var(--muted); font-size: 13.5px; margin-top: 12px; text-align: center; }
+
+  /* modes tabs */
+  .tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; margin: 6px 0 22px; }
+  .tabs button { font: inherit; font-weight: 650; font-size: 14.5px; color: var(--text2); background: none; border: 0; padding: 8px 16px; border-radius: 9px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--accent); color: #fff; }
+  .modes-desc { min-height: 3.2em; }
+
+  /* duo (themes) */
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .duo .shot:nth-child(2) { transform: translateY(40px); }
+  @media (max-width: 700px) { .duo { grid-template-columns: 1fr; } .duo .shot:nth-child(2) { transform: none; } }
+
+  /* real windows */
+  .real { margin: 0 auto; max-width: 920px; }
+  .real .shot { border-radius: 9px; box-shadow: 0 40px 90px -20px rgba(0, 0, 0, .55), 0 0 0 1px rgba(0, 0, 0, .25); }
+  .oslist { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: -24px 0 44px; }
+  .oslist span { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--surface);
+    border: 1px solid var(--border2); font-weight: 600; font-size: 14.5px; }
+  .oslist svg { width: 18px; height: 18px; }
+
+  /* stats */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 860px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 26px; text-align: left; }
+  .stat b { display: block; font-size: 42px; letter-spacing: -.04em; line-height: 1.05; font-weight: 850;
+    background: linear-gradient(135deg, var(--text), color-mix(in srgb, var(--text) 55%, var(--accent2))); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .stat span { display: block; color: var(--text2); font-size: 15px; margin-top: 6px; }
+
+  /* gallery */
+  .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  @media (max-width: 860px) { .gallery { grid-template-columns: 1fr; } }
+  .gallery figure { margin: 0; }
+  .gallery .shot { border-radius: 12px; }
+
+  /* downloads */
+  .dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; text-align: left; }
+  @media (max-width: 900px) { .dl { grid-template-columns: 1fr; } }
+  .dlc { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 12px; position: relative; }
+  .dlc.detected { border-color: var(--accent); box-shadow: 0 0 0 4px var(--glow); }
+  .dlc.detected::before { position: absolute; top: -12px; right: 18px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
+    padding: 3px 10px; border-radius: 999px; content: "[[Tu sistema||Your system]]"; }
+  .dlc .head { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+  .dlc .head svg { width: 34px; height: 34px; }
+  .dlc h3 { margin: 0; font-size: 21px; letter-spacing: -.02em; }
+  .dlc .req { color: var(--muted); font-size: 13.5px; }
+  .dlc a.file { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-decoration: none; padding: 12px 15px; border-radius: 11px;
+    background: var(--surface2); border: 1px solid var(--border); font-weight: 650; font-size: 15px; }
+  .dlc a.file:hover { border-color: var(--accent); }
+  .dlc a.file.main { background: linear-gradient(180deg, var(--accent2), var(--accent)); border-color: transparent; color: #fff; }
+  .dlc a.file small { font-weight: 550; opacity: .8; white-space: nowrap; }
+  .dlc .note { margin: auto 0 0; padding-top: 12px; border-top: 1px dashed var(--border2); color: var(--text2); font-size: 13.5px; }
+  code { font: 13.5px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--surface2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 6px; }
+  .more { margin-top: 26px; color: var(--text2); font-size: 15px; }
+
+  /* faq */
+  .faq { max-width: 820px; margin: 0 auto; text-align: left; }
+  .faq details { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin: 10px 0; }
+  .faq summary { cursor: pointer; list-style: none; padding: 18px 22px; font-weight: 650; font-size: 17px; display: flex; justify-content: space-between; gap: 16px; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; color: var(--accent2); font-size: 22px; line-height: 1; font-weight: 500; }
+  .faq details[open] summary::after { content: "−"; }
+  .faq details p { margin: 0; padding: 0 22px 20px; color: var(--text2); }
+
+  /* final cta */
+  .final { position: relative; overflow: hidden; margin-top: 120px; border-radius: 26px; padding: 70px 32px; text-align: center; color: #fff;
+    background: linear-gradient(135deg, #5a48db, #7b6ef6 45%, #b36bd9); }
+  .final .mosaic { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(12, 1fr); grid-auto-rows: 1fr; gap: 6px; padding: 6px; opacity: .16; pointer-events: none; }
+  .final .mosaic i { border-radius: 6px; background: #fff; }
+  .final > * { position: relative; }
+  .final h2 { color: #fff; margin: 0 0 12px; }
+  .final p { font-size: 19px; opacity: .9; margin: 0 0 30px; }
+  .final .btn.primary { background: #fff; color: #3d2fbf; box-shadow: 0 16px 40px -10px rgba(0, 0, 0, .45); }
+  .final .btn.ghost { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .35); color: #fff; }
+
+  footer { margin-top: 90px; border-top: 1px solid var(--border); padding: 36px 0 46px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
+  footer a { color: var(--text2); }
+
+  /* lightbox */
+  .lightbox { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 3vmin;
+    background: rgba(5, 6, 9, .88); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); cursor: zoom-out; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 100%; max-height: 100%; border-radius: 10px; box-shadow: 0 30px 80px rgba(0, 0, 0, .6); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a8fff"/><stop offset="1" stop-color="#5a48db"/></linearGradient>
+    <symbol id="logo" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="15.4" fill="url(#lg)"/>
+      <rect x="10.9" y="10.9" width="22.1" height="42.2" rx="4.5" fill="#fff"/>
+      <rect x="36.1" y="10.9" width="17" height="20.4" rx="4.5" fill="#ffd166"/>
+      <rect x="36.1" y="34.4" width="6.9" height="18.7" rx="3.4" fill="#4fd1c5"/>
+      <rect x="46.2" y="34.4" width="6.9" height="18.7" rx="3.4" fill="#ff6b8b"/>
+    </symbol>
+    <symbol id="i-win" viewBox="0 0 24 24"><path fill="currentColor" d="M3 5.1 10.4 4v7.1H3V5.1Zm0 13.8 7.4 1.1v-7.1H3v6Zm8.2 1.2L21 21.5v-8.6h-9.8v7.2Zm0-16.2v7.2H21V2.5l-9.8 1.4Z"/></symbol>
+    <symbol id="i-mac" viewBox="0 0 24 24"><path fill="currentColor" d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9-1.7 0-3.3 1-4.2 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9-.1 0-2.7-1-2.7-4.1ZM13.9 5c.7-.9 1.2-2 1.1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.1.1 2.3-.6 3-1.5Z"/></symbol>
+    <symbol id="i-linux" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3"/><path d="M13 15h4"/></g></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></g></symbol>
+    <symbol id="i-gh" viewBox="0 0 24 24"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></g></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></g></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></g></symbol>
+  </defs>
+</svg>
+
+<div class="langhint" id="langhint" hidden>
+  <div class="wrap" lang="[[en||es]]">[[This page is also available in English.||Esta página también está en español.]] <a href="[[en/||../]]" hreflang="[[en||es]]">[[Read it in English →||Leerla en español →]]</a><button type="button" aria-label="[[Close||Cerrar]]">×</button></div>
+</div>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top"><svg aria-hidden="true"><use href="#logo"/></svg>SpaceAnalyzer</a>
+    <nav class="links">
+      <a href="#features"><span class="es">Características</span><span class="en">Features</span></a>
+      <a href="#screens"><span class="es">Capturas</span><span class="en">Screenshots</span></a>
+      <a href="#download"><span class="es">Descargar</span><span class="en">Download</span></a>
+      <a href="#faq"><span class="es">Preguntas</span><span class="en">FAQ</span></a>
+    </nav>
+    <div class="navright">
+      <a class="navbtn gh" href="https://github.com/aurgo/SpaceAnalyzer">GitHub</a>
+      <a class="navbtn lang" id="lang" href="[[en/||../]]" hreflang="[[en||es]]" lang="[[en||es]]" title="[[Read in English||Leer en español]]">[[EN||ES]]</a>
+      <a class="navcta" href="#download"><span class="es">Descargar</span><span class="en">Download</span></a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ======================= HERO ======================= -->
+  <section class="hero">
+    <div class="wrap">
+      <span class="pill"><span class="tag"><span class="es">Gratis</span><span class="en">Free</span></span><span class="es">Para Windows, macOS y Linux</span><span class="en">For Windows, macOS and Linux</span></span>
+      <h1>
+        <span class="es">Mira tu disco entero. <span class="grad">Libera espacio en segundos.</span></span>
+        <span class="en">See your whole disk. <span class="grad">Free up space in seconds.</span></span>
+      </h1>
+      <p class="lead">
+        <span class="es">SpaceAnalyzer es un analizador de espacio en disco que dibuja tu disco como un mapa de bloques: cuanto más grande es el bloque, más ocupa. Los vídeos olvidados, las descargas de hace años y las cachés gigantes saltan a la vista, y con un clic van a la papelera.</span>
+        <span class="en">SpaceAnalyzer is a disk space analyzer that draws your disk as a map of blocks: the bigger the block, the more space it takes. Forgotten videos, years-old downloads and giant caches stand out at a glance, and one click sends them to the trash.</span>
+      </p>
+      <div class="cta">
+        <a class="btn primary" id="primary" href="#download"><svg aria-hidden="true"><use href="#i-down"/></svg><span class="es">Descargar gratis<b class="os"></b></span><span class="en">Free download<b class="os"></b></span></a>
+        <a class="btn ghost" href="https://github.com/aurgo/SpaceAnalyzer"><svg aria-hidden="true"><use href="#i-gh"/></svg><span class="es">Ver en GitHub</span><span class="en">View on GitHub</span></a>
+      </div>
+      <div class="micro">
+        <span class="es">Un solo archivo de ~2 MB</span><span class="en">One ~2 MB file</span>
+        <span class="es">Sin instalación</span><span class="en">No installer</span>
+        <span class="es">Sin anuncios ni rastreo</span><span class="en">No ads, no tracking</span>
+        <span class="es">Código abierto</span><span class="en">Open source</span>
+      </div>
+
+      <div class="stage">
+        <div class="chip a">
+          <div class="sq" style="background:#ef5350"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 13 5.2 3.1a.5.5 0 0 0 .8-.4V8.3a.5.5 0 0 0-.8-.4L16 11"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg></div>
+          <div><b><span class="es">Vídeo · 25,8 GB</span><span class="en">Video · 25.8 GB</span></b><small><span class="es">lo que más ocupa, a la vista</span><span class="en">the biggest hogs, in plain sight</span></small></div>
+        </div>
+        <div class="chip b">
+          <div class="sq" style="background:#3cc47c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <div><b><span class="es">3,25 GB liberados</span><span class="en">3.25 GB freed</span></b><small><span class="es">enviado a la papelera</span><span class="en">moved to the trash</span></small></div>
+        </div>
+        <div class="window shot" data-full="img/hero-2x.webp">
+          <div class="bar"><i></i><i></i><i></i><span>SpaceAnalyzer</span></div>
+          <img src="img/hero.webp" srcset="img/hero.webp 1400w, img/hero-2x.webp 2800w" sizes="(max-width: 1168px) calc(100vw - 48px), 1120px" width="1400" height="880" fetchpriority="high"
+               alt="[[SpaceAnalyzer muestra una carpeta personal como un mapa de bloques coloreados por tipo de archivo, con una ficha de detalles y el panel lateral||SpaceAnalyzer showing a home folder as a map of blocks colored by file type, with a details card and the sidebar]]">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= TRUST ======================= -->
+  <section class="trust">
+    <div class="wrap">
+      <span><svg aria-hidden="true"><use href="#i-win"/></svg>Windows 10 / 11</span>
+      <span><svg aria-hidden="true"><use href="#i-mac"/></svg>macOS 12+</span>
+      <span><svg aria-hidden="true"><use href="#i-linux"/></svg>Linux</span>
+      <span><svg aria-hidden="true"><use href="#i-lock"/></svg><span class="es">Nunca se conecta a Internet</span><span class="en">Never goes online</span></span>
+      <span><svg aria-hidden="true"><use href="#i-code"/></svg><span class="es">Código abierto (MIT)</span><span class="en">Open source (MIT)</span></span>
+    </div>
+  </section>
+
+  <!-- ======================= STEPS ======================= -->
+  <section class="block center">
+    <div class="wrap">
+      <span class="kicker"><span class="es">Así de fácil</span><span class="en">It's that easy</span></span>
+      <h2><span class="es">Tres pasos para recuperar tu disco</span><span class="en">Three steps to get your disk back</span></h2>
+      <p class="sub"><span class="es">Sin configurar nada y sin esperar a instalaciones: ábrelo y empieza.</span><span class="en">Nothing to set up and no installer to wait for: open it and go.</span></p>
+      <div class="steps">
+        <div class="step">
+          <div class="txt"><span class="n">1</span>
+            <h3><span class="es">Elige qué analizar</span><span class="en">Pick what to scan</span></h3>
+            <p><span class="es">Una unidad, tu carpeta personal o cualquier carpeta. También puedes arrastrarla a la ventana.</span><span class="en">A drive, your home folder or any folder. Or just drop it onto the window.</span></p>
+          </div>
+          <div class="pic shot" data-full="img/welcome.webp"><img src="img/welcome.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[Pantalla de inicio con las unidades del equipo||Start screen listing the drives]]"></div>
+        </div>
+        <div class="step">
+          <div class="txt"><span class="n">2</span>
+            <h3><span class="es">Explora el mapa</span><span class="en">Explore the map</span></h3>
+            <p><span class="es">Cada bloque es una carpeta o un archivo, a su tamaño real. Doble clic para entrar y rueda para salir.</span><span class="en">Every block is a folder or a file, drawn to scale. Double-click to dive in, scroll to come back.</span></p>
+          </div>
+          <div class="pic shot" data-full="img/zoom.webp"><img src="img/zoom.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[Zoom en la carpeta Pictures, con los detalles de un bloque||Zoomed into the Pictures folder, with the details of a block]]"></div>
+        </div>
+        <div class="step">
+          <div class="txt"><span class="n">3</span>
+            <h3><span class="es">Libera espacio</span><span class="en">Free up space</span></h3>
+            <p><span class="es">Clic derecho y a la papelera. Siempre te pide confirmación, y el mapa se actualiza al momento.</span><span class="en">Right-click → to the trash. Always confirmed first, and the map updates instantly.</span></p>
+          </div>
+          <div class="pic shot" data-full="img/trash.webp"><img src="img/trash.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[Confirmación antes de mover un archivo a la papelera||Confirmation before moving a file to the trash]]"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= FEATURES ======================= -->
+  <section class="block" id="features" style="padding-top:70px">
+    <div class="wrap">
+      <h2 class="sr-only"><span class="es">Características</span><span class="en">Features</span></h2>
+      <div class="feature">
+        <div class="copy">
+          <span class="kicker"><span class="es">Visión de conjunto</span><span class="en">The big picture</span></span>
+          <h3><span class="es">Todo tu disco, de un vistazo</span><span class="en">Your whole disk at a glance</span></h3>
+          <p><span class="es">Olvídate de abrir carpeta por carpeta. El mapa muestra a la vez todas las carpetas y archivos de tu disco, anidados como en el clásico SpaceMonger, cada uno con su nombre y su tamaño.</span><span class="en">Stop opening folders one by one. The map shows every folder and file on your disk at once, nested like the classic SpaceMonger, each with its name and size.</span></p>
+          <ul>
+            <li class="es">Bloques casi cuadrados, fáciles de comparar (algoritmo <i>squarified</i>)</li><li class="en">Near-square blocks that are easy to compare (<i>squarified</i> layout)</li>
+            <li class="es">Detalles al pasar el ratón: tamaño, porcentaje, archivos y fecha</li><li class="en">Hover for details: size, share, file count and date</li>
+            <li class="es">El espacio libre de la unidad, como un bloque más</li><li class="en">The drive's free space, as one more block</li>
+          </ul>
+        </div>
+        <div class="shot" data-full="img/mode-type.webp"><img src="img/mode-type.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[El mapa coloreado por tipo de archivo||The map colored by file type]]"></div>
+      </div>
+
+      <div class="feature flip">
+        <div class="copy">
+          <span class="kicker"><span class="es">Tres vistas</span><span class="en">Three views</span></span>
+          <h3><span class="es">Colorea según lo que quieras descubrir</span><span class="en">Color it by what you want to find</span></h3>
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" aria-selected="true" data-mode="type"><span class="es">Tipo</span><span class="en">Type</span></button>
+            <button type="button" role="tab" aria-selected="false" data-mode="depth"><span class="es">Nivel</span><span class="en">Depth</span></button>
+            <button type="button" role="tab" aria-selected="false" data-mode="age"><span class="es">Edad</span><span class="en">Age</span></button>
+          </div>
+          <p class="modes-desc" data-mode="type"><span class="es">Por <b>tipo de archivo</b>: vídeo, fotos, música, documentos, programas, juegos… Ves al instante qué clase de archivos se come tu disco.</span><span class="en">By <b>file type</b>: video, photos, music, documents, programs, games… See at once what kind of files eat your disk.</span></p>
+          <p class="modes-desc" data-mode="depth" hidden><span class="es">Por <b>nivel de carpeta</b>, con el aspecto clásico de SpaceMonger: cada nivel tiene su color y la estructura se lee de un vistazo.</span><span class="en">By <b>folder depth</b>, the classic SpaceMonger look: each level has its color, so the structure reads at a glance.</span></p>
+          <p class="modes-desc" data-mode="age" hidden><span class="es">Por <b>antigüedad</b>: un mapa de calor que va de lo reciente, en rojo, a lo que no tocas desde hace años, en violeta. Perfecto para hacer limpieza.</span><span class="en">By <b>age</b>: a heat map from recent (red) to untouched-for-years (violet). Perfect for a clean-up.</span></p>
+        </div>
+        <div class="shot" id="modeshot" data-full="img/mode-type.webp"><img src="img/mode-type.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[El mapa coloreado según el modo elegido||The map colored by the selected mode]]"></div>
+      </div>
+
+      <div class="feature">
+        <div class="copy">
+          <span class="kicker"><span class="es">Búsqueda</span><span class="en">Search</span></span>
+          <h3><span class="es">Encuentra cualquier cosa escribiendo</span><span class="en">Find anything by typing</span></h3>
+          <p><span class="es">Empieza a escribir y el mapa resalta al instante lo que coincide. También ves cuántos archivos son y cuánto ocupan en total.</span><span class="en">Just start typing and the map lights up what matches, instantly — along with how many items there are and how much they take.</span></p>
+          <ul>
+            <li class="es">Sin cuadros de diálogo: escribe y listo</li><li class="en">No dialogs: just type</li>
+            <li class="es">Haz clic en un tipo de archivo del panel para resaltarlo en el mapa</li><li class="en">Click a file type in the sidebar to highlight it on the map</li>
+          </ul>
+        </div>
+        <div class="shot" data-full="img/search.webp"><img src="img/search.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[Al buscar «clip» se resaltan las coincidencias en el mapa||Searching for “clip” highlights the matches on the map]]"></div>
+      </div>
+
+      <div class="feature flip">
+        <div class="copy">
+          <span class="kicker"><span class="es">Acciones</span><span class="en">Actions</span></span>
+          <h3><span class="es">Todo a un clic derecho</span><span class="en">Everything one right-click away</span></h3>
+          <p><span class="es">Abrir, mostrar en Finder o en el Explorador, copiar la ruta, volver a escanear o enviar a la papelera. El panel lateral te enseña los archivos más grandes de lo que estás viendo.</span><span class="en">Open, show in Finder or Explorer, copy the path, rescan, or move to the trash. The sidebar lists the largest files of whatever you're looking at.</span></p>
+          <ul>
+            <li class="es">Atajos de teclado para todo (<kbd>Supr</kbd>, <kbd>⌫</kbd>, <kbd>Ctrl/⌘ + F</kbd>…)</li><li class="en">Keyboard shortcuts for everything (<kbd>Del</kbd>, <kbd>⌫</kbd>, <kbd>Ctrl/⌘ + F</kbd>…)</li>
+            <li class="es">Atrás, adelante y migas de pan, como en un navegador</li><li class="en">Back, forward and breadcrumbs, like a browser</li>
+          </ul>
+        </div>
+        <div class="shot" data-full="img/menu.webp"><img src="img/menu.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[Menú contextual de un archivo||Context menu on a file]]"></div>
+      </div>
+
+      <div class="feature">
+        <div class="copy">
+          <span class="kicker"><span class="es">Seguro</span><span class="en">Safe</span></span>
+          <h3><span class="es">Nunca borra nada sin preguntarte</span><span class="en">It never deletes anything without asking</span></h3>
+          <p><span class="es">SpaceAnalyzer solo mueve a la papelera lo que tú eliges, y siempre te pide confirmación antes, así que puedes recuperarlo. Además no se conecta a Internet: tus archivos no salen de tu equipo.</span><span class="en">SpaceAnalyzer only moves what you pick to the trash, always after confirming, so you can get it back. And it never connects to the Internet: your files stay on your computer.</span></p>
+          <ul>
+            <li class="es">No cuenta dos veces los enlaces ni los otros discos</li><li class="en">Links and other disks are never counted twice</li>
+            <li class="es">Tamaño real en disco (archivos dispersos, comprimidos o en la nube)</li><li class="en">Real size on disk (sparse, compressed and cloud files)</li>
+          </ul>
+        </div>
+        <div class="shot" data-full="img/trash.webp"><img src="img/trash.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[Diálogo de confirmación antes de mover a la papelera||Confirmation dialog before moving to the trash]]"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= THEMES ======================= -->
+  <section class="block center" id="screens">
+    <div class="wrap">
+      <span class="kicker"><span class="es">Diseño</span><span class="en">Design</span></span>
+      <h2><span class="es">Claro u oscuro, en español o en inglés</span><span class="en">Light or dark, English or Spanish</span></h2>
+      <p class="sub"><span class="es">Sigue el tema de tu sistema, o el que tú prefieras, y habla tu idioma. Todo con una interfaz cuidada al detalle.</span><span class="en">It follows your system theme (or the one you prefer) and speaks your language. A carefully crafted interface.</span></p>
+      <div class="duo">
+        <div class="shot" data-full="img/light.webp"><img src="img/light.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[Tema claro||Light theme]]"></div>
+        <div class="shot" data-full="img/lang.webp"><img src="img/lang.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[La app en inglés, coloreada por antigüedad||The app in Spanish, colored by age]]"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= REAL WINDOWS ======================= -->
+  <section class="block center" style="padding-top:150px">
+    <div class="wrap">
+      <span class="kicker"><span class="es">Nativo en todas partes</span><span class="en">Native everywhere</span></span>
+      <h2><span class="es">Hecho para Windows, macOS y Linux</span><span class="en">Made for Windows, macOS and Linux</span></h2>
+      <p class="sub"><span class="es">La misma app, con los mismos píxeles, en los tres sistemas. Esta es una captura real en Windows:</span><span class="en">The same app, pixel for pixel, on all three systems. This is a real Windows screenshot:</span></p>
+      <div class="oslist">
+        <span><svg aria-hidden="true"><use href="#i-win"/></svg>Windows 10 / 11 · x64 · ARM64</span>
+        <span><svg aria-hidden="true"><use href="#i-mac"/></svg>macOS · Apple Silicon · Intel</span>
+        <span><svg aria-hidden="true"><use href="#i-linux"/></svg>Linux · x64 · ARM64</span>
+      </div>
+      <div class="real">
+        <div class="shot plain" data-full="img/windows-real.webp"><img src="img/windows-real.webp" width="908" height="642" loading="lazy" decoding="async" alt="[[SpaceAnalyzer funcionando en Windows||SpaceAnalyzer running on Windows]]"></div>
+        <p class="caption"><span class="es">Captura tomada por la prueba automática que abre la app en Windows en cada cambio.</span><span class="en">Screenshot taken by the automated test that runs the app on Windows on every change.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= STATS ======================= -->
+  <section class="block center">
+    <div class="wrap">
+      <span class="kicker"><span class="es">Ligero de verdad</span><span class="en">Truly lightweight</span></span>
+      <h2><span class="es">Pequeño por fuera, rápido por dentro</span><span class="en">Tiny outside, fast inside</span></h2>
+      <p class="sub"><span class="es">Nada de frameworks pesados: todo, hasta el texto, se dibuja con C# y .NET 10. El espíritu portable del SpaceMonger original.</span><span class="en">No heavy frameworks: everything, down to the text, is drawn with C# and .NET 10. The portable spirit of the original SpaceMonger.</span></p>
+      <div class="stats">
+        <div class="stat"><b>~2 MB</b><span class="es">Un único archivo, sin instalación</span><span class="en">One single file, no installer</span></div>
+        <div class="stat"><b>0</b><span class="es">Dependencias que instalar</span><span class="en">Dependencies to install</span></div>
+        <div class="stat"><b>&lt;7 ms</b><span class="es">Por fotograma, incluso en 4K</span><span class="en">Per frame, even at 4K</span></div>
+        <div class="stat"><b>~500 KB</b><span class="es">Versión <i>mini</i>, si ya tienes .NET 10</span><span class="en"><i>Mini</i> build, if you have .NET 10</span></div>
+        <div class="stat"><b>3</b><span class="es">Sistemas, con los mismos píxeles</span><span class="en">Systems, with the same pixels</span></div>
+        <div class="stat"><b>100 %</b><span class="es">Gratis y de código abierto</span><span class="en">Free and open source</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= GALLERY ======================= -->
+  <section class="block center">
+    <div class="wrap">
+      <span class="kicker"><span class="es">Más capturas</span><span class="en">More screenshots</span></span>
+      <h2><span class="es">Cuidado hasta el último detalle</span><span class="en">Polished down to the last detail</span></h2>
+      <p class="sub"><span class="es">Haz clic en cualquier imagen para verla en grande.</span><span class="en">Click any image to see it full size.</span></p>
+      <div class="gallery">
+        <figure><div class="shot" data-full="img/scanning.webp"><img src="img/scanning.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[Escaneo con el progreso en vivo||Scanning with live progress]]"></div>
+          <figcaption class="caption"><span class="es">Escaneo con progreso en vivo</span><span class="en">Scanning with live progress</span></figcaption></figure>
+        <figure><div class="shot" data-full="img/mode-depth.webp"><img src="img/mode-depth.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[Colores clásicos por nivel de carpeta||Classic colors by folder depth]]"></div>
+          <figcaption class="caption"><span class="es">El modo clásico de SpaceMonger</span><span class="en">The classic SpaceMonger look</span></figcaption></figure>
+        <figure><div class="shot" data-full="img/classic.webp"><img src="img/classic.webp" width="1400" height="880" loading="lazy" decoding="async" alt="[[Una carpeta en el tema claro, por niveles||A folder in the light theme, by depth]]"></div>
+          <figcaption class="caption"><span class="es">Tema claro, por niveles</span><span class="en">Light theme, by depth</span></figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= DOWNLOAD ======================= -->
+  <section class="block center" id="download">
+    <div class="wrap">
+      <span class="kicker"><span class="es">Descargar</span><span class="en">Download</span></span>
+      <h2><span class="es">Gratis. Sin registro. Sin instalación.</span><span class="en">Free. No sign-up. No installer.</span></h2>
+      <p class="sub"><span class="es">Cada archivo es la aplicación completa: descárgalo y ábrelo.</span><span class="en">Each file is the whole app: download it and open it.</span></p>
+      <div class="dl">
+        <div class="dlc" data-os="windows">
+          <div class="head"><svg aria-hidden="true"><use href="#i-win"/></svg><div><h3>Windows</h3><div class="req">Windows 10 / 11</div></div></div>
+          <a class="file main" data-file="SpaceAnalyzer-windows-x64.exe" href="{{download}}SpaceAnalyzer-windows-x64.exe"><span>x64 · .exe</span><small>~2 MB</small></a>
+          <a class="file" data-file="SpaceAnalyzer-windows-arm64.exe" href="{{download}}SpaceAnalyzer-windows-arm64.exe"><span>ARM64 · .exe</span><small>~2 MB</small></a>
+          <a class="file" data-file="SpaceAnalyzer-windows-x64-mini.exe" href="{{download}}SpaceAnalyzer-windows-x64-mini.exe"><span>x64 · mini</span><small>~530 KB · .NET 10</small></a>
+          <p class="note"><span class="es">Si aparece «Windows protegió su PC»: <b>Más información → Ejecutar de todas formas</b>.</span><span class="en">If you see “Windows protected your PC”: <b>More info → Run anyway</b>.</span></p>
+        </div>
+        <div class="dlc" data-os="macos">
+          <div class="head"><svg aria-hidden="true"><use href="#i-mac"/></svg><div><h3>macOS</h3><div class="req"><span class="es">macOS 12+ · Apple Silicon e Intel</span><span class="en">macOS 12+ · Apple Silicon and Intel</span></div></div></div>
+          <a class="file main" data-file="SpaceAnalyzer-macos.zip" href="{{download}}SpaceAnalyzer-macos.zip"><span><span class="es">App universal · .zip</span><span class="en">Universal app · .zip</span></span><small>[[~2,5 MB||~2.5 MB]]</small></a>
+          <p class="note"><span class="es">Arrástrala a Aplicaciones. Si macOS no la deja abrir: <b>Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente</b>.</span><span class="en">Drag it to Applications. If macOS won't open it: <b>System Settings → Privacy &amp; Security → Open Anyway</b>.</span></p>
+        </div>
+        <div class="dlc" data-os="linux">
+          <div class="head"><svg aria-hidden="true"><use href="#i-linux"/></svg><div><h3>Linux</h3><div class="req"><span class="es">X11 o XWayland</span><span class="en">X11 or XWayland</span></div></div></div>
+          <a class="file main" data-file="SpaceAnalyzer-linux-x64.tar.gz" href="{{download}}SpaceAnalyzer-linux-x64.tar.gz"><span>x64 · .tar.gz</span><small>[[~1,5 MB||~1.5 MB]]</small></a>
+          <a class="file" data-file="SpaceAnalyzer-linux-arm64.tar.gz" href="{{download}}SpaceAnalyzer-linux-arm64.tar.gz"><span>ARM64 · .tar.gz</span><small>[[~1,4 MB||~1.4 MB]]</small></a>
+          <p class="note"><code>tar -xzf SpaceAnalyzer-linux-x64.tar.gz && ./SpaceAnalyzer</code></p>
+        </div>
+      </div>
+      <p class="more">
+        <span class="es">Versiones <i>mini</i> para todos los sistemas, sumas SHA-256 y novedades en la <a href="https://github.com/aurgo/SpaceAnalyzer/releases/latest">página de la versión</a>.</span>
+        <span class="en"><i>Mini</i> builds for every system, SHA-256 sums and release notes are on the <a href="https://github.com/aurgo/SpaceAnalyzer/releases/latest">release page</a>.</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ======================= FAQ ======================= -->
+  <section class="block center" id="faq">
+    <div class="wrap">
+      <span class="kicker"><span class="es">Preguntas frecuentes</span><span class="en">FAQ</span></span>
+      <h2><span class="es">¿Dudas?</span><span class="en">Questions?</span></h2>
+      <div class="faq" style="margin-top:36px">
+        <details open>
+          <summary><span class="es">¿Es gratis de verdad?</span><span class="en">Is it really free?</span></summary>
+          <p><span class="es">Sí. Es gratis y de código abierto (licencia MIT), sin anuncios, sin versión de pago y sin registro.</span><span class="en">Yes. It's free and open source (MIT license): no ads, no paid tier, no sign-up.</span></p>
+        </details>
+        <details>
+          <summary><span class="es">¿Por qué Windows o macOS me avisan al abrirlo?</span><span class="en">Why do Windows or macOS warn me when I open it?</span></summary>
+          <p><span class="es">Porque los ejecutables no están firmados con un certificado de pago. El código es público y cada versión incluye sus sumas SHA-256. Si lo prefieres, puedes compilarlo tú mismo con un solo comando.</span><span class="en">Because the executables aren't signed with a paid certificate. The code is public and every release includes SHA-256 sums; you can also build it yourself with one command.</span></p>
+        </details>
+        <details>
+          <summary><span class="es">¿Puede borrar algo por su cuenta?</span><span class="en">Can it delete anything on its own?</span></summary>
+          <p><span class="es">No. Solo mueve a la papelera lo que tú eliges, siempre después de pedirte confirmación, así que siempre puedes recuperarlo desde la papelera.</span><span class="en">No. It only moves what you choose to the trash, always after asking, so you can always restore it from the trash.</span></p>
+        </details>
+        <details>
+          <summary><span class="es">¿Envía mis datos a algún sitio?</span><span class="en">Does it send my data anywhere?</span></summary>
+          <p><span class="es">No. SpaceAnalyzer no se conecta a Internet: todo se analiza en tu equipo y nada sale de él.</span><span class="en">No. SpaceAnalyzer never connects to the Internet: everything is analyzed on your computer and nothing leaves it.</span></p>
+        </details>
+        <details>
+          <summary><span class="es">¿Tengo que instalar algo?</span><span class="en">Do I need to install anything?</span></summary>
+          <p><span class="es">No. Cada descarga es un único archivo que se abre directamente. Las versiones <i>mini</i> pesan unos 500 KB, pero necesitan tener instalado el runtime de .NET 10.</span><span class="en">No. Each download is a single file that runs as is. The <i>mini</i> builds are ~500 KB but need the .NET 10 runtime installed.</span></p>
+        </details>
+        <details>
+          <summary><span class="es">¿Funciona con discos externos o de red?</span><span class="en">Does it work with external or network drives?</span></summary>
+          <p><span class="es">Sí, con cualquier unidad o carpeta que tu sistema pueda leer. Al escanear no salta a otros volúmenes, así que nada se cuenta dos veces.</span><span class="en">Yes, any drive or folder your system can read. Scans never cross into other volumes, so nothing is counted twice.</span></p>
+        </details>
+        <details>
+          <summary><span class="es">¿Por qué pesa tan poco?</span><span class="en">Why is it so small?</span></summary>
+          <p><span class="es">Porque no usa ningún framework de interfaz. Todo se dibuja con su propio código en C#: formas, sombras, iconos y el texto, con la fuente Inter incrustada. De cada sistema solo usa una capa mínima para abrir la ventana.</span><span class="en">Because it uses no UI framework. Everything is drawn by its own C# code (shapes, shadows, icons and text with the embedded Inter font), with only a thin layer per system to open the window.</span></p>
+        </details>
+        <details>
+          <summary><span class="es">¿En qué se diferencia de WinDirStat, WizTree o DaisyDisk?</span><span class="en">How is it different from WinDirStat, WizTree or DaisyDisk?</span></summary>
+          <p><span class="es">Todos te ayudan a ver qué ocupa espacio. SpaceAnalyzer funciona igual en Windows, macOS y Linux, es gratis y de código abierto, y cabe en un único archivo de ~2 MB que no hace falta instalar.</span><span class="en">They all help you see what takes up space. SpaceAnalyzer works the same on Windows, macOS and Linux, is free and open source, and fits in a single ~2 MB file with nothing to install.</span></p>
+        </details>
+        <details>
+          <summary><span class="es">¿Qué es SpaceMonger?</span><span class="en">What is SpaceMonger?</span></summary>
+          <p><span class="es">Un clásico de Windows que mostraba el disco como bloques anidados. SpaceAnalyzer recupera esa idea con un diseño moderno, más funciones y soporte para macOS y Linux. Es un proyecto independiente, sin relación con el original.</span><span class="en">A Windows classic that showed your disk as nested blocks. SpaceAnalyzer brings the idea back with a modern design, more features and macOS and Linux support. It's an independent project, unrelated to the original.</span></p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= FINAL CTA ======================= -->
+  <section class="wrap">
+    <div class="final">
+      <div class="mosaic" aria-hidden="true">
+        <i style="grid-column:span 4;grid-row:span 2"></i><i style="grid-column:span 3"></i><i style="grid-column:span 5;grid-row:span 2"></i>
+        <i style="grid-column:span 2"></i><i></i><i style="grid-column:span 3;grid-row:span 2"></i><i style="grid-column:span 2"></i>
+        <i style="grid-column:span 4"></i><i style="grid-column:span 3"></i><i style="grid-column:span 2"></i><i style="grid-column:span 3"></i>
+      </div>
+      <h2><span class="es">¿Disco lleno? Descubre por qué en segundos.</span><span class="en">Disk full? Find out why in seconds.</span></h2>
+      <p><span class="es">Gratis, sin instalación y en un único archivo de ~2 MB.</span><span class="en">Free, no installer, one ~2 MB file.</span></p>
+      <div class="cta">
+        <a class="btn primary" id="primary2" href="#download"><svg aria-hidden="true"><use href="#i-down"/></svg><span class="es">Descargar gratis<b class="os"></b></span><span class="en">Free download<b class="os"></b></span></a>
+        <a class="btn ghost" href="https://github.com/aurgo/SpaceAnalyzer"><svg aria-hidden="true"><use href="#i-gh"/></svg>GitHub</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Armando · <a href="https://github.com/aurgo/SpaceAnalyzer/blob/main/LICENSE">MIT</a> · <a href="https://github.com/aurgo/SpaceAnalyzer">GitHub</a> · <a href="[[en/||../]]" hreflang="[[en||es]]" lang="[[en||es]]">[[English||Español]]</a></span>
+    <span><span class="es">Fuente <a href="https://rsms.me/inter/">Inter</a> (OFL) · iconos basados en <a href="https://lucide.dev">Lucide</a> (ISC) · inspirado en SpaceMonger</span><span class="en"><a href="https://rsms.me/inter/">Inter</a> font (OFL) · icons based on <a href="https://lucide.dev">Lucide</a> (ISC) · inspired by SpaceMonger</span></span>
+  </div>
+</footer>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="[[Captura||Screenshot]]"><img alt=""></div>
+
+<script>
+(function () {
+  var base = "{{download}}";
+  var lang = document.documentElement.lang; // each language has its own page: / (es) and /en/
+
+  // ---- language: the switch keeps your place; a hint offers the other page to visitors who may prefer it
+  var chosen = null;
+  try { chosen = localStorage.getItem("lang"); } catch (e) {}
+  function remember(l) { try { localStorage.setItem("lang", l); } catch (e) {} }
+  var switcher = document.getElementById("lang");
+  switcher.addEventListener("click", function () {
+    remember(switcher.getAttribute("hreflang"));
+    switcher.href = switcher.href.split("#")[0] + location.hash;
+  });
+  var hint = document.getElementById("langhint");
+  var prefs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
+  var readsSpanish = false;
+  for (var p = 0; p < prefs.length; p++) if (/^es\b/i.test(prefs[p])) readsSpanish = true;
+  if (!chosen && (lang === "es" ? !readsSpanish : /^es\b/i.test(prefs[0]))) hint.hidden = false;
+  hint.querySelector("a").addEventListener("click", function () { remember(this.getAttribute("hreflang")); });
+  hint.querySelector("button").addEventListener("click", function () { hint.hidden = true; remember(lang); });
+
+  // ---- offer the right file for this computer
+  var ua = navigator.userAgent || "";
+  var platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
+  var os = null;
+  if (/iPhone|iPad|iPod|Android/i.test(ua)) os = null;
+  else if (/Win/i.test(platform) || /Windows/i.test(ua)) os = "windows";
+  else if (/Mac/i.test(platform) || /Mac OS X/i.test(ua)) os = "macos";
+  else if (/Linux/i.test(platform) || /Linux|X11/i.test(ua)) os = "linux";
+  var names = { windows: "Windows", macos: "macOS", linux: "Linux" };
+  var files = { windows: "SpaceAnalyzer-windows-x64.exe", macos: "SpaceAnalyzer-macos.zip", linux: "SpaceAnalyzer-linux-x64.tar.gz" };
+  function offer(file) {
+    var buttons = [document.getElementById("primary"), document.getElementById("primary2")];
+    for (var b = 0; b < buttons.length; b++) buttons[b].href = base + file;
+    var labels = document.querySelectorAll(".btn.primary .os");
+    for (var k = 0; k < labels.length; k++) labels[k].textContent = "[[ para || for ]]" + names[os];
+    var card = document.querySelector('.dlc[data-os="' + os + '"]');
+    if (card) card.classList.add("detected");
+  }
+  if (os) {
+    offer(files[os]);
+    if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues && os !== "macos") {
+      navigator.userAgentData.getHighEntropyValues(["architecture"]).then(function (v) {
+        if (v.architecture === "arm") offer(os === "windows" ? "SpaceAnalyzer-windows-arm64.exe" : "SpaceAnalyzer-linux-arm64.tar.gz");
+      }).catch(function () {});
+    }
+  }
+
+  // ---- color mode tabs (the other two images load the first time the tabs are touched)
+  var shot = document.getElementById("modeshot"), shotImg = shot.querySelector("img");
+  function modeUrl(url, mode) { return url.replace(/mode-[a-z]+\.webp$/, "mode-" + mode + ".webp"); }
+  var tabs = document.querySelectorAll(".tabs button");
+  for (var t = 0; t < tabs.length; t++) {
+    tabs[t].addEventListener("click", function () {
+      var mode = this.getAttribute("data-mode");
+      for (var j = 0; j < tabs.length; j++) tabs[j].setAttribute("aria-selected", tabs[j] === this ? "true" : "false");
+      var descs = document.querySelectorAll(".modes-desc");
+      for (var d = 0; d < descs.length; d++) descs[d].hidden = descs[d].getAttribute("data-mode") !== mode;
+      shotImg.src = modeUrl(shotImg.src, mode);
+      shot.setAttribute("data-full", modeUrl(shot.getAttribute("data-full"), mode));
+    });
+  }
+  var preloaded = false;
+  function preload() {
+    if (preloaded) return;
+    preloaded = true;
+    ["depth", "age"].forEach(function (m) { new Image().src = modeUrl(shotImg.src, m); });
+  }
+  document.querySelector(".tabs").addEventListener("pointerenter", preload);
+  document.querySelector(".tabs").addEventListener("focusin", preload);
+
+  // ---- click any screenshot to see it full size
+  var box = document.getElementById("lightbox"), boxImg = box.querySelector("img");
+  var shots = document.querySelectorAll("[data-full]");
+  for (var s = 0; s < shots.length; s++) {
+    shots[s].addEventListener("click", function () {
+      var img = this.querySelector("img");
+      boxImg.src = this.getAttribute("data-full");
+      boxImg.alt = img ? img.alt : "";
+      box.classList.add("open");
+    });
+  }
+  function close() { box.classList.remove("open"); }
+  box.addEventListener("click", close);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+})();
+</script>
+
+<script id="webmcp">
+// WebMCP (https://webmachinelearning.github.io/webmcp/): tools that let an AI agent in the browser use this page
+// directly (find the right download, answer questions, show a screenshot) instead of guessing where to click.
+// They are only registered where the browser supports WebMCP; elsewhere this does nothing.
+(function () {
+  var mc = document.modelContext || navigator.modelContext; // navigator.modelContext: the older name (Chromium < 150)
+  if (!mc || typeof mc.registerTool !== "function") return;
+  var legacy = !document.modelContext; // the older API expects MCP-style { content: [...] } results
+
+  var lang = document.documentElement.lang;
+  var releases = "https://github.com/aurgo/SpaceAnalyzer/releases/latest";
+  function reply(data) {
+    return legacy ? { content: [{ type: "text", text: typeof data === "string" ? data : JSON.stringify(data, null, 2) }] } : data;
+  }
+  function text(el) { return el ? el.textContent.replace(/\s+/g, " ").trim() : ""; }
+  function plain(s) { return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+
+  // Everything comes from the page itself, so the tools always say exactly what the page says.
+  function downloads() {
+    var list = [], cards = document.querySelectorAll(".dlc[data-os]");
+    for (var c = 0; c < cards.length; c++) {
+      var links = cards[c].querySelectorAll("a[data-file]");
+      for (var l = 0; l < links.length; l++) {
+        var file = links[l].getAttribute("data-file"), mini = /-mini/.test(file);
+        list.push({
+          os: cards[c].getAttribute("data-os"),
+          arch: /macos/.test(file) ? "universal (Apple Silicon and Intel)" : /arm64/.test(file) ? "arm64" : "x64",
+          edition: mini ? "mini" : "standalone",
+          file: file,
+          url: links[l].href,
+          size: text(links[l].querySelector("small")),
+          requirements: text(cards[c].querySelector(".req")) + (mini ? ", .NET 10 runtime" : ""),
+          firstRun: text(cards[c].querySelector(".note"))
+        });
+      }
+    }
+    list.push({ os: "any", arch: "all", edition: "mini", file: "SpaceAnalyzer-mini-dotnet10.zip", url: releases + "/download/SpaceAnalyzer-mini-dotnet10.zip",
+      size: "~500 KB per system", requirements: ".NET 10 runtime", firstRun: "The zip has one folder per system (win-x64, osx-arm64, linux-x64…)." });
+    return list;
+  }
+
+  var tools = [
+    {
+      name: "get_app_info",
+      title: "About SpaceAnalyzer",
+      description: "Describes SpaceAnalyzer, the free disk space analyzer this page is about: what it does, its features, supported systems, price, license, privacy and links to the source code and releases.",
+      inputSchema: { type: "object", properties: {}, additionalProperties: false },
+      annotations: { readOnlyHint: true },
+      execute: function () {
+        return reply({
+          name: "SpaceAnalyzer",
+          version: "{{version}}",
+          summary: document.querySelector('meta[name="description"]').content,
+          whatItDoes: "Scans a drive or folder and draws it as a nested treemap, like the classic SpaceMonger: every file and folder is a block drawn to scale, so what takes up space is obvious. Items can be opened, shown in Finder/Explorer, or moved to the trash (always after confirming).",
+          features: [
+            "Nested squarified treemap of any drive or folder, with the drive's free space as a block",
+            "Animated zoom, breadcrumbs, back/forward and keyboard shortcuts",
+            "Color by file type, by folder depth (classic SpaceMonger look) or by age",
+            "Instant search that highlights matches and shows their count and total size",
+            "Sidebar with details, a breakdown by file type and the largest files",
+            "Open, show in Finder/Explorer, copy path, rescan, move to trash",
+            "Multi-threaded scan; links and other volumes are not counted twice; real size on disk",
+            "Light and dark themes; English and Spanish"
+          ],
+          platforms: ["Windows 10/11 (x64, ARM64)", "macOS 12+ (Apple Silicon and Intel)", "Linux x64/ARM64 with X11 or XWayland"],
+          price: "Free",
+          license: "MIT (open source)",
+          privacy: "Never connects to the Internet: no telemetry, no ads, no account.",
+          install: "Nothing to install: each download is a single ~2 MB executable (on macOS, an app inside a .zip).",
+          links: { website: location.href.split("#")[0], source: "https://github.com/aurgo/SpaceAnalyzer", releases: releases, issues: "https://github.com/aurgo/SpaceAnalyzer/issues" }
+        });
+      }
+    },
+    {
+      name: "get_download_link",
+      title: "Get the download link",
+      description: "Returns the direct download link for SpaceAnalyzer for an operating system and CPU, with its size, requirements and what to do the first time it runs. With no arguments it returns the file this page recommends for the visitor's computer.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          os: { type: "string", enum: ["windows", "macos", "linux"], description: "Operating system. Omit to use the visitor's computer." },
+          arch: { type: "string", enum: ["x64", "arm64"], description: "CPU for Windows and Linux (default x64). macOS has one universal app." },
+          edition: { type: "string", enum: ["standalone", "mini"], description: "standalone (default) needs nothing else; mini is ~500 KB but needs the .NET 10 runtime." }
+        },
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true },
+      execute: function (input) {
+        input = input || {};
+        var all = downloads(), pick = null;
+        var recommended = document.getElementById("primary").href;
+        if (!input.os && !input.arch && !input.edition)
+          pick = all.filter(function (d) { return d.url === recommended; })[0];
+        var os = input.os || (pick && pick.os);
+        if (!os)
+          return reply({ note: "The visitor's system could not be detected: ask which one they use.", downloads: all, checksums: releases + "/download/SHA256SUMS.txt" });
+        var edition = input.edition || "standalone", arch = input.arch || "x64";
+        pick = pick || all.filter(function (d) { return d.os === os && d.edition === edition && (os === "macos" || d.arch === arch); })[0]
+                    || all.filter(function (d) { return d.edition === edition && d.os === "any"; })[0];
+        return reply({
+          download: pick,
+          otherOptions: all.filter(function (d) { return d !== pick && (d.os === os || d.os === "any"); }),
+          checksums: releases + "/download/SHA256SUMS.txt",
+          releaseNotes: releases
+        });
+      }
+    },
+    {
+      name: "search_faq",
+      title: "Search the FAQ",
+      description: "Searches this page's frequently asked questions (price, safety, privacy, installation, security warnings on first run, alternatives such as WinDirStat or DaisyDisk…) and returns the matching questions with their answers, in the page's language. Omit the query to get them all.",
+      inputSchema: {
+        type: "object",
+        properties: { query: { type: "string", description: "Words to look for." } },
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true },
+      execute: function (input) {
+        var all = [], nodes = document.querySelectorAll(".faq details");
+        for (var n = 0; n < nodes.length; n++)
+          all.push({ question: text(nodes[n].querySelector("summary")), answer: text(nodes[n].querySelector("p")) });
+        var words = plain((input && input.query) || "").split(/[^a-z0-9]+/).filter(function (w) { return w.length > 2; });
+        var hits = all.map(function (item) {
+          var haystack = plain(item.question + " " + item.answer), score = 0;
+          words.forEach(function (w) { if (haystack.indexOf(w) >= 0) score++; });
+          return { item: item, score: score };
+        }).filter(function (h) { return h.score > 0; }).sort(function (a, b) { return b.score - a.score; });
+        return reply({
+          language: lang,
+          results: hits.length ? hits.map(function (h) { return h.item; }) : all,
+          note: words.length && !hits.length ? "Nothing matched, so here are all the questions." : undefined
+        });
+      }
+    },
+    {
+      name: "show_section",
+      title: "Scroll to a section",
+      description: "Scrolls the page to a section so the visitor can see it: 'download' (the download buttons for every system), 'features', 'screenshots', 'faq' or 'top'.",
+      inputSchema: {
+        type: "object",
+        properties: { section: { type: "string", enum: ["top", "features", "screenshots", "download", "faq"] } },
+        required: ["section"],
+        additionalProperties: false
+      },
+      execute: function (input) {
+        var ids = { top: "top", features: "features", screenshots: "screens", download: "download", faq: "faq" };
+        var el = document.getElementById(ids[input.section]);
+        if (!el) return reply("There is no section called '" + input.section + "'.");
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        return reply("The page now shows the '" + input.section + "' section.");
+      }
+    },
+    {
+      name: "show_screenshot",
+      title: "Show a screenshot",
+      description: "Opens one of the app's screenshots full size on the page so the visitor can see it, and returns what it shows. overview: main window; welcome: start screen; zoom: inside a folder; search: search results; menu: right-click menu; trash: move-to-trash confirmation; mode-type, mode-depth, mode-age: the three ways to color the map; light: light theme; lang: the app in the other language; windows-real: a real Windows screenshot; scanning: scan in progress; classic: classic look in the light theme.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          name: { type: "string", enum: ["overview", "welcome", "zoom", "search", "menu", "trash", "mode-type", "mode-depth", "mode-age", "light", "lang", "windows-real", "scanning", "classic"] }
+        },
+        required: ["name"],
+        additionalProperties: false
+      },
+      execute: function (input) {
+        var name = input.name, el, description;
+        if (/^mode-/.test(name)) {
+          var tab = document.querySelector('.tabs [data-mode="' + name.slice(5) + '"]');
+          if (tab) tab.click();
+          el = document.getElementById("modeshot");
+          description = text(document.querySelector('.modes-desc[data-mode="' + name.slice(5) + '"]'));
+        } else {
+          el = document.querySelector('[data-full$="/' + (name === "overview" ? "hero-2x" : name) + '.webp"]');
+        }
+        if (!el) return reply("There is no screenshot called '" + name + "'.");
+        el.scrollIntoView({ block: "center" });
+        el.click();
+        return reply({ shown: name, description: description || el.querySelector("img").alt });
+      }
+    },
+    {
+      name: "set_language",
+      title: "Change the page language",
+      description: "Switches this page between Spanish ('es') and English ('en'). The page reloads in the chosen language.",
+      inputSchema: {
+        type: "object",
+        properties: { language: { type: "string", enum: ["es", "en"] } },
+        required: ["language"],
+        additionalProperties: false
+      },
+      execute: function (input) {
+        var names = { es: "Spanish", en: "English" };
+        if (input.language === lang) return reply("The page is already in " + names[lang] + ".");
+        var link = document.getElementById("lang");
+        setTimeout(function () { link.click(); }, 100);
+        return reply("Switching the page to " + names[input.language] + "; it will reload.");
+      }
+    }
+  ];
+
+  tools.forEach(function (tool) {
+    try {
+      var done = mc.registerTool(tool);
+      if (done && typeof done.catch === "function") done.catch(function (e) { console.warn("WebMCP:", tool.name, e); });
+    } catch (e) {
+      console.warn("WebMCP:", tool.name, e);
+    }
+  });
+})();
+</script>
+</body>
+</html>

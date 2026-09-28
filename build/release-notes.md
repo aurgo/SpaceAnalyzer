@@ -1,6 +1,6 @@
 **SpaceAnalyzer** es un visualizador de espacio en disco moderno, inspirado en el clásico SpaceMonger. Todo cabe en **un único archivo**: sin instalador, sin frameworks de interfaz y dibujado entero en C#.
 
-🌐 **Página:** https://aurgo.github.io/SpaceAnalyzer/
+🌐 **Página:** https://aurgo.github.io/SpaceAnalyzer/ · [English](https://aurgo.github.io/SpaceAnalyzer/en/)
 
 ![SpaceAnalyzer](https://raw.githubusercontent.com/aurgo/SpaceAnalyzer/main/docs/screenshot.png)
 
@@ -11,9 +11,9 @@
 | **Windows 10/11** (x64) | `SpaceAnalyzer-windows-x64.exe` | ~2 MB | Ninguno |
 | Windows 10/11 (ARM64) | `SpaceAnalyzer-windows-arm64.exe` | ~2 MB | Ninguno |
 | Windows 10/11 (x64), *mini* | `SpaceAnalyzer-windows-x64-mini.exe` | ~530 KB | [.NET 10 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) |
-| **macOS 12+** (Apple Silicon e Intel) | `SpaceAnalyzer-macos.zip` | ~5 MB | Ninguno |
+| **macOS 12+** (Apple Silicon e Intel) | `SpaceAnalyzer-macos.zip` | ~2,5 MB | Ninguno |
 | **Linux** (x64 / ARM64, X11 o XWayland) | `SpaceAnalyzer-linux-x64.tar.gz` / `-linux-arm64.tar.gz` | ~1,5 MB | Ninguno |
-| Todas, *mini* | `SpaceAnalyzer-mini-dotnet10.zip` | ~450 KB cada una | .NET 10 Runtime |
+| Todas, *mini* | `SpaceAnalyzer-mini-dotnet10.zip` | ~1,5 MB (~500 KB cada una) | .NET 10 Runtime |
 
 `SHA256SUMS.txt` contiene las sumas de comprobación de todos los archivos.
 

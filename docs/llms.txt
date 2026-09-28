@@ -1,0 +1,24 @@
+# SpaceAnalyzer
+
+> SpaceAnalyzer is a free, open-source disk space analyzer for Windows, macOS and Linux. It draws a drive or folder as a nested treemap, like the classic SpaceMonger, so you can see at once what takes up space and move it to the trash. Each download is a single ~2 MB executable with nothing to install, and the app never connects to the Internet.
+
+- License: MIT. Price: free. No ads, no telemetry, no account.
+- Systems: Windows 10/11 (x64, ARM64), macOS 12+ (Apple Silicon and Intel), Linux x64/ARM64 (X11 or XWayland).
+- Features: squarified nested treemap, animated zoom, coloring by file type, folder depth or age, instant search with match count and size, largest files, move to trash (always confirmed), light and dark themes, English and Spanish.
+- Built in C# on .NET 10 with no UI framework: shapes, shadows, icons and text are drawn by its own software renderer, with a thin window layer per system (Win32, AppKit, X11). Released as Native AOT executables.
+
+## Downloads
+
+- [Windows x64](https://github.com/aurgo/SpaceAnalyzer/releases/latest/download/SpaceAnalyzer-windows-x64.exe): single .exe
+- [Windows ARM64](https://github.com/aurgo/SpaceAnalyzer/releases/latest/download/SpaceAnalyzer-windows-arm64.exe): single .exe
+- [macOS](https://github.com/aurgo/SpaceAnalyzer/releases/latest/download/SpaceAnalyzer-macos.zip): universal app in a .zip
+- [Linux x64](https://github.com/aurgo/SpaceAnalyzer/releases/latest/download/SpaceAnalyzer-linux-x64.tar.gz) and [Linux ARM64](https://github.com/aurgo/SpaceAnalyzer/releases/latest/download/SpaceAnalyzer-linux-arm64.tar.gz)
+- [Mini builds, ~500 KB each, need the .NET 10 runtime](https://github.com/aurgo/SpaceAnalyzer/releases/latest/download/SpaceAnalyzer-mini-dotnet10.zip)
+- [Release notes and SHA-256 sums](https://github.com/aurgo/SpaceAnalyzer/releases/latest)
+
+## Pages
+
+- [Website in English](https://aurgo.github.io/SpaceAnalyzer/en/): features, screenshots, downloads and FAQ
+- [Sitio web en español](https://aurgo.github.io/SpaceAnalyzer/)
+- [Source code and README](https://github.com/aurgo/SpaceAnalyzer)
+- [Report a problem](https://github.com/aurgo/SpaceAnalyzer/issues)

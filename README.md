@@ -9,10 +9,28 @@
 <p align="center">
   <b>Descubre qué ocupa espacio en tu disco.</b><br>
   Un visualizador de espacio en disco moderno, inspirado en el clásico SpaceMonger,<br>
-  en <b>un único ejecutable de ~500 KB</b>: sin instalación y sin frameworks de interfaz.
+  en <b>un único ejecutable de ~2 MB</b>: sin instalación y sin frameworks de interfaz.
+</p>
+
+<p align="center">
+  <a href="https://aurgo.github.io/SpaceAnalyzer/"><b>Web</b></a> ·
+  <a href="https://github.com/aurgo/SpaceAnalyzer/releases/latest"><b>Descargar</b></a> ·
+  <a href="https://aurgo.github.io/SpaceAnalyzer/en/">English</a>
 </p>
 
 ![SpaceAnalyzer: treemap de una carpeta personal coloreado por tipo de archivo](docs/screenshot.png)
+
+## Descargar
+
+Descarga el archivo de tu sistema de la [última versión](https://github.com/aurgo/SpaceAnalyzer/releases/latest). No hay nada que instalar:
+
+| Sistema | Descarga |
+|---|---|
+| Windows 10/11 | [x64](https://github.com/aurgo/SpaceAnalyzer/releases/latest/download/SpaceAnalyzer-windows-x64.exe) · [ARM64](https://github.com/aurgo/SpaceAnalyzer/releases/latest/download/SpaceAnalyzer-windows-arm64.exe) |
+| macOS 12+ (Apple Silicon e Intel) | [App universal](https://github.com/aurgo/SpaceAnalyzer/releases/latest/download/SpaceAnalyzer-macos.zip) |
+| Linux (X11 o XWayland) | [x64](https://github.com/aurgo/SpaceAnalyzer/releases/latest/download/SpaceAnalyzer-linux-x64.tar.gz) · [ARM64](https://github.com/aurgo/SpaceAnalyzer/releases/latest/download/SpaceAnalyzer-linux-arm64.tar.gz) |
+
+Windows y macOS avisan la primera vez porque los ejecutables no están firmados con un certificado de pago. En la [página de la versión](https://github.com/aurgo/SpaceAnalyzer/releases/latest) se explica cómo abrirlos. También hay versiones *mini*, de unos 500 KB, para quien ya tiene instalado .NET 10.
 
 ## Características
 
@@ -89,7 +107,10 @@ También hay scripts de ayuda:
 ./build/publish.sh        # ejecutables para todas las plataformas, en artifacts/
 ./build/macos-app.sh      # SpaceAnalyzer.app con su icono (macOS)
 dotnet test               # pruebas automáticas
+dotnet run tools/SiteGen.cs   # regenera la web (docs/) a partir de site/index.html
 ```
+
+Al subir una etiqueta `v*`, el flujo [Release](.github/workflows/release.yml) compila los ejecutables nativos de cada sistema y publica la versión.
 
 El `.exe` de Windows también se puede generar desde macOS o Linux. Solo hay una diferencia: el icono del archivo y el manifiesto se incrustan únicamente al compilar en Windows. Aun así, la ventana siempre muestra su icono.
 
@@ -132,6 +153,9 @@ src/SpaceAnalyzer/
 tests/SpaceAnalyzer.Tests/   pruebas: escaneo, algoritmo, dibujo, texto e interfaz sin ventana
 tools/
   FontBaker.cs   convierte una fuente TTF al formato compacto .saf
+  SiteGen.cs     genera la web en español e inglés a partir de la plantilla
+site/            plantilla bilingüe de la web (SEO, datos estructurados y herramientas WebMCP)
+docs/            la web publicada en GitHub Pages y las imágenes de este README
 build/           scripts de publicación
 ```
 
@@ -145,7 +169,9 @@ Incluye la fuente Inter (SIL Open Font License 1.1) e iconos basados en Lucide (
 
 ### In English
 
-**SpaceAnalyzer** is a modern disk space visualizer inspired by the classic SpaceMonger, in **one ~500 KB executable**. It shows a nested *squarified* treemap that you can zoom, color by file type, folder depth or age, search, and use to open files or move them to the trash.
+**SpaceAnalyzer** is a modern disk space visualizer inspired by the classic SpaceMonger, in **one ~2 MB executable** (~500 KB if you already have .NET 10). It shows a nested *squarified* treemap that you can zoom, color by file type, folder depth or age, search, and use to open files or move them to the trash.
+
+**[Website](https://aurgo.github.io/SpaceAnalyzer/en/)** · **[Download](https://github.com/aurgo/SpaceAnalyzer/releases/latest)** for Windows (x64, ARM64), macOS (Apple Silicon and Intel) or Linux (x64, ARM64). There is nothing to install.
 
 There is no UI framework. Everything, including shapes, text with the embedded Inter font, and icons, is drawn by a small software renderer written in C#. Each operating system only needs a thin layer that opens the window and forwards input: Win32, AppKit or X11.
 

@@ -7,9 +7,14 @@
   </Folder>
   <Folder Name="/tools/">
     <File Path="tools/FontBaker.cs" />
+    <File Path="tools/SiteGen.cs" />
+  </Folder>
+  <Folder Name="/site/">
+    <File Path="site/index.html" />
   </Folder>
   <Folder Name="/build/">
     <File Path="build/macos-app.sh" />
     <File Path="build/publish.sh" />
+    <File Path="build/release-notes.md" />
   </Folder>
 </Solution>
