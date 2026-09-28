@@ -168,8 +168,12 @@ public sealed partial class MainView
             case Key.Space:
                 if (m.Hover >= 0 && m.Items[m.Hover].Enabled) PickMenu(m, m.Hover);
                 break;
+            default:
+                // Anything else closes the menu and is handled normally (shortcuts, Alt+F4, ⌘Q...).
+                CloseMenu();
+                return false;
         }
-        return true; // menus swallow the keyboard while open
+        return true;
     }
 
     // =====================================================================================
@@ -230,7 +234,7 @@ public sealed partial class MainView
     bool SearchKey(Key key, Mods mods)
     {
         if (!_searchBox.Focused) return false;
-        bool cmd = P.IsMac ? (mods & Mods.Meta) != 0 : (mods & Mods.Ctrl) != 0;
+        bool cmd = IsCommand(mods);
         bool word = P.IsMac ? (mods & Mods.Alt) != 0 : (mods & Mods.Ctrl) != 0;
         bool shift = (mods & Mods.Shift) != 0;
         var tb = _searchBox;

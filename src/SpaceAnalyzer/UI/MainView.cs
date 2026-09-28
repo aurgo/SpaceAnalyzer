@@ -120,9 +120,9 @@ public sealed partial class MainView
         P.Invalidate();
     }
 
+    /// <summary>Called at startup and whenever the OS theme changes; always re-applies (the window frame too).</summary>
     public void SetSystemDark(bool dark)
     {
-        if (_systemDark == dark) return;
         _systemDark = dark;
         UpdateTheme();
     }
@@ -300,7 +300,7 @@ public sealed partial class MainView
 
     public bool OnKeyDown(Key key, Mods mods)
     {
-        bool cmd = P.IsMac ? (mods & Mods.Meta) != 0 : (mods & Mods.Ctrl) != 0;
+        bool cmd = IsCommand(mods);
         bool alt = (mods & Mods.Alt) != 0;
 
         if (MenuKey(key)) return true;
@@ -941,6 +941,14 @@ public sealed partial class MainView
             if (_zones[i].Id == id) return _zones[i];
         return null;
     }
+
+    /// <summary>
+    /// The shortcut modifier: ⌘ on macOS, Ctrl elsewhere. Ctrl+Alt is AltGr on many keyboard layouts
+    /// (it types "@", "[", "€"...), so it is never treated as a shortcut.
+    /// </summary>
+    bool IsCommand(Mods mods) => P.IsMac
+        ? (mods & Mods.Meta) != 0
+        : (mods & Mods.Ctrl) != 0 && (mods & Mods.Alt) == 0;
 
     bool Hot(int id) => _hot == id;
     bool Down(int id) => _pressed == id && _hot == id;

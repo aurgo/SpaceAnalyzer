@@ -26,6 +26,7 @@ public sealed class Options
     public float HoverX = -1, HoverY = -1;
     public bool HideSidebar;
     public bool Demo;                  // made-up home folder instead of a real scan
+    public int Bench;                  // repaint N frames and print the time per frame
 
     public static Options Parse(string[] args)
     {
@@ -60,6 +61,7 @@ public sealed class Options
                 case "--os": o.Os = Next(); break;
                 case "--no-sidebar": o.HideSidebar = true; break;
                 case "--demo": o.Demo = true; break;
+                case "--bench": o.Bench = int.Parse(Next(), CultureInfo.InvariantCulture); break;
                 case "--hover":
                 {
                     var parts = Next().Split(',');

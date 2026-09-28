@@ -128,6 +128,8 @@ static unsafe partial class User32
     [LibraryImport(Lib)] public static partial int ScreenToClient(IntPtr hwnd, POINT* pt);
     [LibraryImport(Lib)] public static partial uint GetDpiForWindow(IntPtr hwnd);
     [LibraryImport(Lib)] public static partial int SetProcessDpiAwarenessContext(IntPtr context);
+    [LibraryImport(Lib)] public static partial int SetProcessDPIAware();
+    [LibraryImport(Lib)] public static partial int GetSystemMetricsForDpi(int index, uint dpi);
     [LibraryImport(Lib)] public static partial int SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
     [LibraryImport(Lib)] public static partial int SetWindowTextW(IntPtr hwnd, char* text);
     [LibraryImport(Lib)] public static partial IntPtr SetFocus(IntPtr hwnd);
@@ -141,6 +143,7 @@ static unsafe partial class User32
     [LibraryImport(Lib)] public static partial int GetMonitorInfoW(IntPtr monitor, MONITORINFO* info);
     [LibraryImport(Lib)] public static partial int MessageBoxW(IntPtr hwnd, char* text, char* caption, uint type);
     [LibraryImport(Lib)] public static partial IntPtr CreateIconIndirect(ICONINFO* info);
+    [LibraryImport(Lib)] public static partial int DestroyIcon(IntPtr icon);
     [LibraryImport(Lib)] public static partial int SetForegroundWindow(IntPtr hwnd);
 }
 
@@ -148,7 +151,7 @@ static unsafe partial class Gdi32
 {
     const string Lib = "gdi32.dll";
 
-    [LibraryImport(Lib)] public static partial int SetDIBitsToDevice(IntPtr hdc, int xDest, int yDest, uint w, uint h, int xSrc, int ySrc, uint startScan, uint lines, void* bits, BITMAPINFOHEADER* info, uint colorUse);
+    [LibraryImport(Lib)] public static partial int StretchDIBits(IntPtr hdc, int xDest, int yDest, int destWidth, int destHeight, int xSrc, int ySrc, int srcWidth, int srcHeight, void* bits, BITMAPINFOHEADER* info, uint usage, uint rop);
     [LibraryImport(Lib)] public static partial IntPtr CreateDIBSection(IntPtr hdc, BITMAPINFOHEADER* info, uint usage, void** bits, IntPtr section, uint offset);
     [LibraryImport(Lib)] public static partial IntPtr CreateBitmap(int width, int height, uint planes, uint bitCount, void* bits);
     [LibraryImport(Lib)] public static partial int DeleteObject(IntPtr obj);

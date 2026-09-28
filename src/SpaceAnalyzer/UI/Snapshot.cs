@@ -32,6 +32,23 @@ public static class Snapshot
         platform.RunPosted();
         view.Paint(new SoftCanvas(surface));
 
+        if (o.Bench > 0)
+        {
+            // Frames as the user sees them while moving the mouse: the treemap image is cached,
+            // everything else (chrome, sidebar, hover highlight and card) is painted again.
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; i < o.Bench; i++)
+            {
+                if (o.HoverX >= 0) view.OnMouseMove((o.HoverX + (i % 40)) * o.Scale, o.HoverY * o.Scale);
+                view.Paint(new SoftCanvas(surface));
+            }
+            double frame = sw.Elapsed.TotalMilliseconds / o.Bench;
+            sw.Restart();
+            view.InvalidateLayers();
+            view.Paint(new SoftCanvas(surface));
+            Console.WriteLine($"{w}x{h}: {frame:F2} ms per frame, full treemap re-render {sw.Elapsed.TotalMilliseconds:F1} ms");
+        }
+
         string file = Path.GetFullPath(o.Snapshot!);
         Png.Save(surface, file);
         Console.WriteLine($"Snapshot written to {file}");
