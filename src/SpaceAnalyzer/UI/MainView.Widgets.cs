@@ -360,7 +360,7 @@ public sealed partial class MainView
             foreach (var candidate in new[] { full, Fmt.Count(_searchCount) })
             {
                 float rw = c.MeasureText(candidate, rf);
-                if (right - rw - 8 * S - (box.X + 34 * S) < 40 * S) continue;
+                if (right - rw - 8 * S - (box.X + 34 * S) < 28 * S) continue;
                 results = candidate;
                 c.DrawText(candidate, RectF.FromLTRB(right - rw - 2 * S, box.Y, right, box.Bottom), rf,
                     _searchCount == 0 ? T.Danger : T.TextMuted, TextAlign.Right, Trim.None);

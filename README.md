@@ -3,6 +3,10 @@
 <h1 align="center">SpaceAnalyzer</h1>
 
 <p align="center">
+  <a href="https://github.com/aurgo/SpaceAnalyzer/actions/workflows/ci.yml"><img src="https://github.com/aurgo/SpaceAnalyzer/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+</p>
+
+<p align="center">
   <b>Descubre qué ocupa espacio en tu disco.</b><br>
   Un visualizador de espacio en disco moderno, inspirado en el clásico SpaceMonger,<br>
   en <b>un único ejecutable de ~500 KB</b>: sin instalación y sin frameworks de interfaz.
@@ -42,13 +46,21 @@
   - macOS: AppKit
   - Linux: X11
 
-| Plataforma | Estado | Tamaño |
-|---|---|---|
-| macOS (Apple Silicon e Intel) | ✅ Funcional, probado | ~450 KB |
-| Windows 10/11 (x64, ARM64) | 🧪 Implementado (Win32); falta probarlo en un equipo real | ~500 KB |
-| Linux (X11 y XWayland) | 🧪 Implementado (Xlib); falta probarlo en un equipo real | ~400 KB |
+| Plataforma | Estado | Un archivo (con .NET 10) | Nativo AOT (sin dependencias) |
+|---|---|---|---|
+| Windows 10/11 (x64, ARM64) | ✅ Funcional | ~530 KB | ~2,0 MB |
+| macOS (Apple Silicon e Intel) | ✅ Funcional | ~480 KB | ~2,3 MB |
+| Linux (X11 y XWayland) | ✅ Funcional | ~430 KB | ~3,0 MB |
 
-La interfaz en sí, con el dibujo, la disposición, el ratón y el teclado, es el mismo código en todos los sistemas. Tiene pruebas automáticas que se ejecutan en cualquier sistema operativo.
+La interfaz en sí, con el dibujo, la disposición, el ratón y el teclado, es el mismo código en todos los sistemas.
+
+La [integración continua](.github/workflows/ci.yml) hace esto en cada cambio:
+- Pasa las pruebas en los tres sistemas y compila los ejecutables.
+- **Abre la app de verdad** en Windows y en Linux (con un servidor X virtual).
+- Mueve el ratón, hace doble clic, escribe una búsqueda y abre el menú contextual.
+- Guarda una captura en cada paso.
+
+Los ejecutables y las capturas quedan como *artifacts* de cada ejecución.
 
 ## Compilar y ejecutar
 
@@ -137,6 +149,6 @@ Incluye la fuente Inter (SIL Open Font License 1.1) e iconos basados en Lucide (
 
 There is no UI framework. Everything, including shapes, text with the embedded Inter font, and icons, is drawn by a small software renderer written in C#. Each operating system only needs a thin layer that opens the window and forwards input: Win32, AppKit or X11.
 
-The macOS version is tested. The Windows (Win32) and Linux (Xlib) layers are implemented but have not been tried on real machines yet.
+It works on Windows, macOS and Linux. CI launches the real app on Windows and on Linux (Xvfb), drives it with the mouse and keyboard, and saves screenshots.
 
 Build it with `dotnet publish src/SpaceAnalyzer -c Release -r <rid>`.
