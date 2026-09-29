@@ -20,6 +20,7 @@ public sealed partial class MainView
     // Hit-zone ids.
     const int ZHome = 1, ZOpen = 2, ZRescan = 3, ZBack = 4, ZForward = 5, ZUp = 6, ZSearch = 7, ZSearchClear = 8,
               ZSidebarToggle = 9, ZMore = 10, ZMode = 11, // 11..13
+              ZAskAi = 14,
               ZTreemap = 20, ZCancel = 21, ZChoose = 22, ZHomeFolder = 23, ZResume = 24, ZInfoPath = 25,
               ZDlgBackdrop = 30, ZDlgCard = 31, ZDlgCancel = 32, ZDlgOk = 33, ZDlgLink = 34, ZDlgUpdate = 35,
               ZAction = 40,    // 40..43
@@ -409,6 +410,8 @@ public sealed partial class MainView
         Cmd.RescanItem => _screen == Screen.Browse && Target is { IsDirectory: true },
         Cmd.TrashItem => _screen == Screen.Browse && _selected is { Parent: not null },
         Cmd.Find => _screen == Screen.Browse,
+        Cmd.AskAi => _screen == Screen.Browse && _view is not null,
+        Cmd.AskAiItem => _screen == Screen.Browse && Target is not null,
         Cmd.ToggleFreeSpace => _rootIsVolume,
         _ => true,
     };
@@ -470,6 +473,8 @@ public sealed partial class MainView
                 if (_selected is { Parent: not null } victim) { _dialog = DialogKind.Trash; _dialogNode = victim; }
                 break;
             case Cmd.Find: FocusSearch(selectAll: true); break;
+            case Cmd.AskAi: CopyAiPrompt(_view!); break;
+            case Cmd.AskAiItem: CopyAiPrompt(Target!); break;
             case Cmd.ToggleSidebar: _sidebar = !_sidebar; break;
             case Cmd.ToggleFreeSpace: _showFree = !_showFree; _layoutDirty = true; break;
             case Cmd.ColorType: SetMode(ColorMode.Type); break;
@@ -570,6 +575,8 @@ public sealed partial class MainView
     {
         var items = new List<MenuEntry>
         {
+            new((int)Cmd.AskAi, Strings.AskAi, IsEnabled(Cmd.AskAi)),
+            MenuEntry.Separator,
             new((int)Cmd.ToggleFreeSpace, Strings.ShowFreeSpace, IsEnabled(Cmd.ToggleFreeSpace), IsChecked(Cmd.ToggleFreeSpace)),
             new((int)Cmd.ToggleSidebar, Strings.Sidebar, true, _sidebar),
             MenuEntry.Separator,
@@ -965,6 +972,13 @@ public sealed partial class MainView
     void OpenLatestRelease()
     {
         if (_latest is { } r) OpenWeb(r.Url);
+    }
+
+    /// <summary>"Ask AI": the prompt goes to the clipboard and the user pastes it into the AI they use.</summary>
+    void CopyAiPrompt(FileNode node)
+    {
+        P.CopyText(AiPrompt.Build(node, _volume));
+        ShowToast(Strings.PromptCopied);
     }
 
     void TrashNow(FileNode node)

@@ -165,6 +165,7 @@ sealed unsafe class MacHost : IPlatform
         AddCmd(file, Strings.Reveal, Cmd.RevealItem, "r", cmd | shift);
         AddCmd(file, Strings.CopyPath, Cmd.CopyPath, "c", cmd | opt);
         AddCmd(file, Strings.RescanFolder, Cmd.RescanItem);
+        AddCmd(file, Strings.AskAi, Cmd.AskAi);
         AddSeparator(file);
         AddCmd(file, Strings.Trash, Cmd.TrashItem, "\b");
         AddSeparator(file);

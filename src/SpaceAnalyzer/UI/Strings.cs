@@ -42,6 +42,10 @@ public static class Strings
         ? T("Sin coincidencias en esta carpeta", "No matches in this folder")
         : T($"{Fmt.Count(n)} {(n == 1 ? "coincidencia" : "coincidencias")} · {size}", $"{Fmt.Count(n)} {(n == 1 ? "match" : "matches")} · {size}");
     public static string MoreOptions => T("Más opciones", "More options");
+    public static string AskAi => T("Preguntar a la IA qué borrar", "Ask AI what to delete");
+    public static string AskAiTip => T("Preguntar a la IA qué borrar: copia un prompt para pegarlo en tu IA", "Ask AI what to delete: copies a prompt to paste into your AI");
+    public static string AskAiItem => T("Preguntar a la IA", "Ask AI");
+    public static string PromptCopied => T("Prompt copiado: pégalo en el chat de tu IA", "Prompt copied: paste it into your AI chat");
     public static string Sidebar => T("Panel lateral", "Sidebar");
     public static string ColorType => T("Tipo", "Type");
     public static string ColorDepth => T("Nivel", "Depth");

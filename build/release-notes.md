@@ -35,6 +35,7 @@ Los ejecutables no están firmados con un certificado de pago, así que el siste
 - **Acciones**: abrir, mostrar en Finder o en el Explorador, copiar la ruta, enviar a la papelera y volver a escanear una carpeta.
 - **Espacio libre** de la unidad, tema claro u oscuro, español e inglés.
 - **Escaneo multihilo**. No cuenta dos veces los enlaces simbólicos ni los otros volúmenes, y usa el tamaño real en disco de los archivos dispersos.
+- **Preguntar a la IA qué borrar**: copia un prompt con lo que más ocupa para pegarlo en el chat de tu IA.
 - **Buscar actualizaciones** desde «Acerca de». Es la única vez que se conecta a Internet, y solo cuando pulsas el botón.
 
 ---

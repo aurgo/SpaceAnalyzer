@@ -252,11 +252,9 @@ public sealed partial class MainView
         items.Add(new MenuEntry((int)Cmd.RevealItem, Strings.Reveal));
         items.Add(new MenuEntry((int)Cmd.CopyPath, Strings.CopyPath));
         if (P.CanShowProperties) items.Add(new MenuEntry((int)Cmd.Properties, Strings.Properties));
-        if (Target is { IsDirectory: true })
-        {
-            items.Add(MenuEntry.Separator);
-            items.Add(new MenuEntry((int)Cmd.RescanItem, Strings.RescanFolder));
-        }
+        items.Add(MenuEntry.Separator);
+        if (Target is { IsDirectory: true }) items.Add(new MenuEntry((int)Cmd.RescanItem, Strings.RescanFolder));
+        items.Add(new MenuEntry((int)Cmd.AskAiItem, Strings.AskAiItem));
         items.Add(MenuEntry.Separator);
         items.Add(new MenuEntry((int)Cmd.TrashItem, Strings.Trash, IsEnabled(Cmd.TrashItem)));
         OpenMenu(items, x, y, id => Execute((Cmd)id));

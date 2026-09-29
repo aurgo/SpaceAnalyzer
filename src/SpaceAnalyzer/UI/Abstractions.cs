@@ -139,6 +139,8 @@ public enum Cmd
     ThemeSystem, ThemeDark, ThemeLight,
     About, Quit,
     HomeFolder,
+    /// <summary>Copy a prompt about the current view (<see cref="AskAiItem"/>: about the selected item) to paste into an AI.</summary>
+    AskAi, AskAiItem,
     /// <summary>Menu ids at or above this value scan the volume with that index.</summary>
     VolumeBase = 1000,
 }

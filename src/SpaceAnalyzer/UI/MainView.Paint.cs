@@ -87,6 +87,8 @@ public sealed partial class MainView
         IconButton(c, ZMore, _moreButton, Icons.More, ShowMoreMenu, Strings.MoreOptions);
         rx -= bh + 2 * S;
         IconButton(c, ZSidebarToggle, new RectF(rx - bh, top, bh, bh), Icons.PanelRight, () => Execute(Cmd.ToggleSidebar), Strings.Sidebar, active: _sidebar);
+        rx -= bh + 2 * S;
+        IconButton(c, ZAskAi, new RectF(rx - bh, top, bh, bh), Icons.Sparkles, () => Execute(Cmd.AskAi), Strings.AskAiTip, IsEnabled(Cmd.AskAi));
         rx -= bh + 10 * S;
 
         var segF = F(12.5f, Weight.Medium);

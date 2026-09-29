@@ -337,6 +337,25 @@ public class MainViewTests
         Assert.True(v.DialogOpen);
     }
 
+    [Fact]
+    public void Ask_AI_copies_a_prompt_about_the_view_or_the_clicked_item()
+    {
+        var (v, p, s) = Create();
+        v.Execute(Cmd.AskAi);
+        Assert.Contains("Carpeta: " + v.ViewNode!.FullPath, p.Clipboard);
+        Assert.Equal(Strings.PromptCopied, v.ToastText);
+
+        var file = MainView.LargestFiles(v.RootNode!, 1)[0];
+        var cell = TreemapBuilder.FindCell(v.Layout!, file)!;
+        var r = cell.R.Offset(v.TreemapRect.X, v.TreemapRect.Y);
+        v.OnMouseDown(r.CenterX, r.CenterY, MouseButton.Right, 1, Mods.None); // right-click: selects it and opens the menu
+        Assert.True(v.MenuOpen);
+        Paint(v, s);
+        v.OnKeyDown(Key.Escape, Mods.None);
+        v.Execute(Cmd.AskAiItem);
+        Assert.Contains("Archivo: " + file.FullPath, p.Clipboard);
+    }
+
     /// <summary>Opens About, presses "Check for updates" and waits for the (fake) answer from GitHub.</summary>
     static void CheckForUpdates(MainView v, HeadlessPlatform p, Surface s, string? answer)
     {
@@ -444,5 +463,69 @@ public class MainViewTests
             Paint(v, s);
         }
         Strings.Spanish = true;
+    }
+}
+
+/// <summary>"Ask AI": the prompt the user pastes into an AI chat.</summary>
+public class AiPromptTests
+{
+    static string[] Outline(string prompt)
+    {
+        var lines = prompt.Split('\n');
+        int start = Array.FindIndex(lines, l => l.StartsWith("Contenido") || l.StartsWith("Contents")) + 1;
+        int end = Array.FindIndex(lines, start, l => l.Length == 0);
+        return lines[start..end];
+    }
+
+    [Fact]
+    public void Lists_the_biggest_items_with_paths_sizes_and_the_free_space()
+    {
+        var tree = DemoTree.Build();
+        string prompt = AiPrompt.Build(tree, DemoTree.Volume);
+        Assert.Contains("Carpeta: " + tree.FullPath + " — " + Fmt.Size(tree.Size), prompt);
+        Assert.Contains(Strings.FreeOf(Fmt.Size(DemoTree.Volume.FreeSpace), Fmt.Size(DemoTree.Volume.TotalSize)), prompt);
+
+        var outline = Outline(prompt);
+        Assert.InRange(outline.Length, 20, AiPrompt.MaxTreeLines);
+        var topLevel = outline.Where(l => !l.StartsWith(' ')).ToList();
+        foreach (var big in tree.Children.Where(c => c.Size >= tree.Size / 1000).Take(12))
+            Assert.Contains(topLevel, l => l.StartsWith(big.Name)); // every big top-level item, before going deeper
+
+        foreach (var file in MainView.LargestFiles(tree, AiPrompt.LargestFiles))
+            Assert.Contains($"{file.FullPath} — {Fmt.Size(file.Size)} · ", prompt);
+    }
+
+    [Fact]
+    public void Folders_holding_a_single_thing_take_one_line()
+    {
+        var root = new FileNode("/data", NodeKind.Directory, null);
+        var app = new FileNode("app", NodeKind.Directory, root);
+        var vm = new FileNode("vm", NodeKind.Directory, app);
+        var disk = new FileNode("disk.img", NodeKind.File, vm) { Size = 8_000_000_000 };
+        var notes = new FileNode("notes.txt", NodeKind.File, root) { Size = 2_000 };
+        vm.Children = [disk];
+        app.Children = [vm];
+        root.Children = [app, notes];
+        Scanner.Aggregate(root);
+
+        var outline = Outline(AiPrompt.Build(root, null));
+        char sep = Path.DirectorySeparatorChar;
+        Assert.StartsWith($"app{sep}vm{sep}disk.img — {Fmt.Size(8_000_000_000)}", outline[0]);
+        Assert.Equal($"({Strings.MoreItems(1)} · {Fmt.Size(2_000)})", outline[1]); // notes.txt is below 0.1 %
+    }
+
+    [Fact]
+    public void A_file_gets_a_short_question_in_the_app_language()
+    {
+        var file = MainView.LargestFiles(DemoTree.Build(), 1)[0];
+        try
+        {
+            Strings.Spanish = false;
+            string prompt = AiPrompt.Build(file, null);
+            Assert.StartsWith("Can I safely delete this file?", prompt);
+            Assert.Contains("File: " + file.FullPath, prompt);
+            Assert.Contains("Size: " + Fmt.Size(file.Size), prompt);
+        }
+        finally { Strings.Spanish = true; }
     }
 }

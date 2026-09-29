@@ -45,6 +45,7 @@ Windows y macOS avisan la primera vez porque los ejecutables no están firmados 
 - **Acciones**: abrir, mostrar en Finder o en el Explorador, copiar la ruta, enviar a la papelera (con confirmación; el mapa se actualiza sin volver a escanear) y volver a escanear una subcarpeta.
 - Muestra el **espacio libre** de la unidad como un bloque más. Tiene niveles de detalle, tema claro, oscuro o del sistema, y está en español e inglés.
 - **Escaneo multihilo** con progreso en vivo. No sigue enlaces simbólicos ni entra en otros volúmenes, así que nada se cuenta dos veces. Usa el tamaño real en disco de los archivos dispersos, comprimidos o en la nube.
+- **Preguntar a la IA qué borrar**: el botón ✨ copia un prompt con lo que más ocupa (rutas, tamaños y fechas) para pegarlo en el chat de la IA que uses. Con clic derecho, la pregunta es sobre ese archivo o carpeta. La app no lo envía a ningún sitio.
 - **Buscar actualizaciones** desde «Acerca de»: le pregunta a GitHub cuál es la última versión. Es la única vez que la app se conecta a Internet, y solo cuando pulsas el botón.
 
 | Inicio | Modo clásico (colores por nivel), tema claro |
@@ -170,7 +171,7 @@ Incluye la fuente Inter (SIL Open Font License 1.1) e iconos basados en Lucide (
 
 ### In English
 
-**SpaceAnalyzer** is a modern disk space visualizer inspired by the classic SpaceMonger, in **one ~2 MB executable** (~500 KB if you already have .NET 10). It shows a nested *squarified* treemap that you can zoom, color by file type, folder depth or age, search, and use to open files or move them to the trash. It only goes online when you press *Check for updates* in About.
+**SpaceAnalyzer** is a modern disk space visualizer inspired by the classic SpaceMonger, in **one ~2 MB executable** (~500 KB if you already have .NET 10). It shows a nested *squarified* treemap that you can zoom, color by file type, folder depth or age, search, and use to open files or move them to the trash. *Ask AI* copies a prompt with the largest items, to paste into any AI chat. It only goes online when you press *Check for updates* in About.
 
 **[Website](https://aurgo.github.io/SpaceAnalyzer/en/)** · **[Download](https://github.com/aurgo/SpaceAnalyzer/releases/latest)** for Windows (x64, ARM64), macOS (Apple Silicon and Intel) or Linux (x64, ARM64). There is nothing to install.
 
