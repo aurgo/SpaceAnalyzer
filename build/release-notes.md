@@ -4,6 +4,12 @@
 
 ![SpaceAnalyzer](https://raw.githubusercontent.com/aurgo/SpaceAnalyzer/main/docs/screenshot.png)
 
+## Novedades
+
+- **Preguntar a la IA qué borrar**: el botón ✨ copia un prompt con lo que más ocupa (rutas, tamaños y fechas) para pegarlo en el chat de tu IA. Con clic derecho, pregunta por ese archivo o carpeta.
+- **Buscar actualizaciones** en «Acerca de», que ahora también enlaza al repositorio de GitHub.
+- El bloque de **espacio libre** muestra su tamaño sin tener que pulsarlo.
+
 ## Descargas
 
 | Sistema | Archivo | Tamaño | Requisitos |
@@ -40,4 +46,4 @@ Los ejecutables no están firmados con un certificado de pago, así que el siste
 
 ---
 
-**English:** a modern, single-file disk space visualizer inspired by the classic SpaceMonger. Download the file for your system above; there is nothing to install. The *mini* builds are ~500 KB but need the .NET 10 runtime. Windows and macOS will warn the first time, because the binaries aren't signed with a paid certificate (see "Primer arranque").
+**English:** a modern, single-file disk space visualizer inspired by the classic SpaceMonger. Download the file for your system above; there is nothing to install. The *mini* builds are ~500 KB but need the .NET 10 runtime. Windows and macOS will warn the first time, because the binaries aren't signed with a paid certificate (see "Primer arranque"). New in this version: *Ask AI what to delete*, *Check for updates* in About, and the free space block shows its size.
