@@ -1,11 +1,17 @@
 name: Release
 
 # Pushing a tag like v1.2.3 builds every download on its own OS and publishes a GitHub release.
-# Run it by hand (Actions > Release > Run workflow) to build everything without publishing.
+# Run it by hand (Actions > Release > Run workflow) to build everything without publishing, or tick
+# "publish" to release the version in Directory.Build.props: the tag is created at the commit it ran on.
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the release (tag v<Version> from Directory.Build.props)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -106,7 +112,7 @@ jobs:
 
   release:
     name: Publish the release
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.publish
     needs: [windows, linux, macos, mini]
     runs-on: ubuntu-latest
     permissions:
@@ -115,14 +121,17 @@ jobs:
       - uses: actions/checkout@v7
       # The app reports <Version> and "Check for updates" compares it with the latest tag: they must be equal.
       - name: The tag matches the app version
+        id: tag
         env:
-          TAG: ${{ github.ref_name }}
+          REF: ${{ github.ref }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)"
-          if [ "$TAG" != "v$version" ]; then
-            echo "::error::Tag $TAG does not match <Version>$version</Version> in Directory.Build.props. Update it and tag again."
+          if [[ "$REF" == refs/tags/* && "$REF_NAME" != "v$version" ]]; then
+            echo "::error::Tag $REF_NAME does not match <Version>$version</Version> in Directory.Build.props. Update it and tag again."
             exit 1
           fi
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
       - uses: actions/download-artifact@v8
         with:
           pattern: dist-*
@@ -131,8 +140,9 @@ jobs:
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           ls -l dist
           (cd dist && sha256sum * > SHA256SUMS.txt)
-          gh release create "$TAG" dist/* --title "SpaceAnalyzer ${TAG#v}" --notes-file build/release-notes.md
+          # --target only matters when the tag doesn't exist yet (a manual run): it is created at this commit.
+          gh release create "$TAG" dist/* --target "$GITHUB_SHA" --title "SpaceAnalyzer ${TAG#v}" --notes-file build/release-notes.md

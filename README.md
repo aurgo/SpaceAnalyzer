@@ -112,7 +112,7 @@ dotnet test               # pruebas automáticas
 dotnet run tools/SiteGen.cs   # regenera la web (docs/) a partir de site/index.html
 ```
 
-Al subir una etiqueta `v*`, el flujo [Release](.github/workflows/release.yml) compila los ejecutables nativos de cada sistema y publica la versión.
+Al subir una etiqueta `v*`, el flujo [Release](.github/workflows/release.yml) compila los ejecutables nativos de cada sistema y publica la versión. También se puede publicar desde GitHub, sin etiqueta: **Actions → Release → Run workflow** con *publish* marcado crea la etiqueta `v` + la versión de `Directory.Build.props`. Antes de publicar hay que subir esa versión, y la etiqueta tiene que coincidir con ella.
 
 El `.exe` de Windows también se puede generar desde macOS o Linux. Solo hay una diferencia: el icono del archivo y el manifiesto se incrustan únicamente al compilar en Windows. Aun así, la ventana siempre muestra su icono.
 
