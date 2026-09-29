@@ -628,6 +628,11 @@ sealed unsafe class X11Host : IPlatform
 
     public bool OpenUrl(string url) => Launch("xdg-open", url);
 
+    /// <summary>With curl, or wget if there is no curl: nearly every distribution ships one of them.</summary>
+    public string? DownloadText(string url) => FindInPath("curl") is not null
+        ? RunFor(15000, "curl", "-fsSL", "--max-time", "12", url)
+        : RunFor(15000, "wget", "-q", "-O", "-", "--timeout=12", url);
+
     public bool RevealPath(string path)
     {
         // The FileManager1 D-Bus interface selects the item (Nautilus, Dolphin, Nemo, Thunar...).
@@ -692,7 +697,9 @@ sealed unsafe class X11Host : IPlatform
     }
 
     /// <summary>Runs a helper and returns its output, or null if it is missing, fails or takes too long.</summary>
-    static string? Run(string exe, params string[] args)
+    static string? Run(string exe, params string[] args) => RunFor(4000, exe, args);
+
+    static string? RunFor(int milliseconds, string exe, params string[] args)
     {
         if (FindInPath(exe) is not { } path) return null;
         try
@@ -701,7 +708,7 @@ sealed unsafe class X11Host : IPlatform
             foreach (var a in args) psi.ArgumentList.Add(a);
             using var p = Process.Start(psi)!;
             var output = p.StandardOutput.ReadToEndAsync();
-            if (!p.WaitForExit(4000))
+            if (!p.WaitForExit(milliseconds))
             {
                 try { p.Kill(); } catch { }
                 return null;

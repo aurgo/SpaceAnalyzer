@@ -213,3 +213,44 @@ public class DemoTreeTests
         Assert.Equal(expected, fast.Select(f => f.Size));
     }
 }
+
+public class UpdateCheckTests
+{
+    [Theory]
+    [InlineData("v1.1.0", "1.0.0", true)]
+    [InlineData("v1.0.0", "1.0.0", false)]
+    [InlineData("v1.0", "1.0.0", false)]
+    [InlineData("1.10.0", "1.9.0", true)]
+    [InlineData("v2.0.0-beta.1", "1.9.9", true)]
+    [InlineData("v0.9.9", "1.0.0", false)]
+    [InlineData("latest", "1.0.0", false)]
+    public void Versions_compare_by_number(string latest, string current, bool newer) =>
+        Assert.Equal(newer, GitHub.IsNewer(latest, current));
+
+    [Fact]
+    public void Reads_the_tag_of_the_latest_release()
+    {
+        // Shaped like the real answer: nested objects have their own fields, and the notes can quote anything.
+        const string json = """
+            {"url":"https://api.github.com/repos/aurgo/SpaceAnalyzer/releases/1",
+             "author":{"login":"aurgo","html_url":"https://github.com/aurgo","tag_name":"v7.0.0"},
+             "tag_name" : "v1.2.0", "name":"SpaceAnalyzer 1.2.0",
+             "assets":[{"name":"SpaceAnalyzer-windows-x64.exe","tag_name":"v8.0.0"}],
+             "body":"\"quotes\", a \\ backslash, {braces} and [brackets], and \"tag_name\": \"v9.0.0\" é"}
+            """;
+        var release = Assert.NotNull(GitHub.ParseLatestRelease(json));
+        Assert.Equal("1.2.0", release.Version);
+        Assert.Equal("https://github.com/aurgo/SpaceAnalyzer/releases/tag/v1.2.0", release.Url);
+        Assert.Equal("\"quotes\", a \\ backslash, {braces} and [brackets], and \"tag_name\": \"v9.0.0\" é", GitHub.TopLevelString(json, "body"));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("<html>Sign in to the Wi-Fi</html>")]
+    [InlineData("""{"message":"Not Found","documentation_url":"https://docs.github.com/rest"}""")]
+    [InlineData("""{"message":"API rate limit exceeded","tag_name":null}""")]
+    [InlineData("""{"tag_name":"nightly"}""")]
+    public void Anything_but_a_release_fails_the_check(string? answer) =>
+        Assert.Null(GitHub.ParseLatestRelease(answer));
+}

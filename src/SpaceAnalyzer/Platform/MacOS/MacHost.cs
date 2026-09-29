@@ -626,6 +626,21 @@ sealed unsafe class MacHost : IPlatform
         return nsUrl != IntPtr.Zero && GetBool(Workspace, "openURL:", nsUrl);
     }
 
+    /// <summary>With Foundation, which uses the system's proxy settings and certificate store. Called on a worker thread.</summary>
+    public string? DownloadText(string url)
+    {
+        var pool = objc_autoreleasePoolPush();
+        try
+        {
+            var nsUrl = Send(Class("NSURL"), "URLWithString:", Str(url));
+            if (nsUrl == IntPtr.Zero) return null;
+            const long Utf8 = 4; // NSUTF8StringEncoding
+            return ToManaged(Send(Class("NSString"), "stringWithContentsOfURL:encoding:error:", nsUrl, (IntPtr)Utf8, IntPtr.Zero));
+        }
+        catch (Exception ex) { Report(ex); return null; }
+        finally { objc_autoreleasePoolPop(pool); }
+    }
+
     public bool RevealPath(string path) =>
         ((delegate* unmanaged<IntPtr, IntPtr, IntPtr, IntPtr, byte>)MsgSend)(
             Workspace, Sel("selectFile:inFileViewerRootedAtPath:"), Str(path), Str("")) != 0;

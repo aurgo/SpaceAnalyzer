@@ -372,7 +372,7 @@
       <span><svg aria-hidden="true"><use href="#i-win"/></svg>Windows 10 / 11</span>
       <span><svg aria-hidden="true"><use href="#i-mac"/></svg>macOS 12+</span>
       <span><svg aria-hidden="true"><use href="#i-linux"/></svg>Linux</span>
-      <span><svg aria-hidden="true"><use href="#i-lock"/></svg><span class="es">Nunca se conecta a Internet</span><span class="en">Never goes online</span></span>
+      <span><svg aria-hidden="true"><use href="#i-lock"/></svg><span class="es">Solo se conecta si buscas actualizaciones</span><span class="en">Offline unless you check for updates</span></span>
       <span><svg aria-hidden="true"><use href="#i-code"/></svg><span class="es">Código abierto (MIT)</span><span class="en">Open source (MIT)</span></span>
     </div>
   </section>
@@ -473,7 +473,7 @@
         <div class="copy">
           <span class="kicker"><span class="es">Seguro</span><span class="en">Safe</span></span>
           <h3><span class="es">Nunca borra nada sin preguntarte</span><span class="en">It never deletes anything without asking</span></h3>
-          <p><span class="es">SpaceAnalyzer solo mueve a la papelera lo que tú eliges, y siempre te pide confirmación antes, así que puedes recuperarlo. Además no se conecta a Internet: tus archivos no salen de tu equipo.</span><span class="en">SpaceAnalyzer only moves what you pick to the trash, always after confirming, so you can get it back. And it never connects to the Internet: your files stay on your computer.</span></p>
+          <p><span class="es">SpaceAnalyzer solo mueve a la papelera lo que tú eliges, y siempre te pide confirmación antes, así que puedes recuperarlo. Además, tus archivos no salen de tu equipo: solo se conecta a Internet si le pides que busque actualizaciones.</span><span class="en">SpaceAnalyzer only moves what you pick to the trash, always after confirming, so you can get it back. And your files stay on your computer: it only goes online if you ask it to check for updates.</span></p>
           <ul>
             <li class="es">No cuenta dos veces los enlaces ni los otros discos</li><li class="en">Links and other disks are never counted twice</li>
             <li class="es">Tamaño real en disco (archivos dispersos, comprimidos o en la nube)</li><li class="en">Real size on disk (sparse, compressed and cloud files)</li>
@@ -602,7 +602,7 @@
         </details>
         <details>
           <summary><span class="es">¿Envía mis datos a algún sitio?</span><span class="en">Does it send my data anywhere?</span></summary>
-          <p><span class="es">No. SpaceAnalyzer no se conecta a Internet: todo se analiza en tu equipo y nada sale de él.</span><span class="en">No. SpaceAnalyzer never connects to the Internet: everything is analyzed on your computer and nothing leaves it.</span></p>
+          <p><span class="es">No. Todo se analiza en tu equipo y nada sale de él. SpaceAnalyzer solo se conecta a Internet si pulsas «Buscar actualizaciones» en «Acerca de», y entonces solo le pregunta a GitHub cuál es la última versión.</span><span class="en">No. Everything is analyzed on your computer and nothing leaves it. SpaceAnalyzer only goes online if you press “Check for updates” in About, and then it just asks GitHub for the latest version.</span></p>
         </details>
         <details>
           <summary><span class="es">¿Tengo que instalar algo?</span><span class="en">Do I need to install anything?</span></summary>
@@ -811,7 +811,7 @@
           platforms: ["Windows 10/11 (x64, ARM64)", "macOS 12+ (Apple Silicon and Intel)", "Linux x64/ARM64 with X11 or XWayland"],
           price: "Free",
           license: "MIT (open source)",
-          privacy: "Never connects to the Internet: no telemetry, no ads, no account.",
+          privacy: "Offline unless you press Check for updates in About, which only asks GitHub for the latest version: no telemetry, no ads, no account.",
           install: "Nothing to install: each download is a single ~2 MB executable (on macOS, an app inside a .zip).",
           links: { website: location.href.split("#")[0], source: "https://github.com/aurgo/SpaceAnalyzer", releases: releases, issues: "https://github.com/aurgo/SpaceAnalyzer/issues" }
         });

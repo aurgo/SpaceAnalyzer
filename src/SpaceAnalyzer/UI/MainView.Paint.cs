@@ -720,9 +720,9 @@ public sealed partial class MainView
         y += 72 * S;
         c.DrawText(Strings.AppName, new RectF(r.X, y, r.W, 30 * S), F(22, Weight.Bold), T.TextPrimary, TextAlign.Center);
         y += 30 * S;
-        c.DrawText(Strings.Version(Version) + " · .NET " + Environment.Version.ToString(2), new RectF(r.X, y, r.W, 18 * S), F(12), T.TextMuted, TextAlign.Center);
-        y += 30 * S;
         var inner = new RectF(r.X + 24 * S, 0, r.W - 48 * S, 18 * S);
+        PaintVersionLine(c, inner.WithY(y));
+        y += 30 * S;
         c.DrawText(Strings.AboutLine1, inner.WithY(y), F(12.5f), T.TextSecondary, TextAlign.Center);
         y += 20 * S;
         c.DrawText(Strings.AboutLine2, inner.WithY(y), F(12.5f), T.TextSecondary, TextAlign.Center);
@@ -730,12 +730,48 @@ public sealed partial class MainView
         c.DrawText(Strings.AboutLine3, inner.WithY(y), F(11.5f), T.TextMuted, TextAlign.Center);
         y += 30 * S;
         var fl = F(12.5f, Weight.Medium);
-        string repo = RepoUrl["https://".Length..];
+        string repo = GitHub.Repo["https://".Length..];
         float lw = MeasureButton(c, Icons.GitHub, repo, false, fl);
-        Button(c, ZDlgLink, new RectF(r.CenterX - lw / 2, y, lw, 28 * S), Icons.GitHub, repo, Btn.Link, OpenRepo, font: fl);
+        Button(c, ZDlgLink, new RectF(r.CenterX - lw / 2, y, lw, 28 * S), Icons.GitHub, repo, Btn.Link, () => OpenWeb(GitHub.Repo), font: fl);
+
+        // "Check for updates", which becomes "Download 1.2.0" once it has found a newer version; then "Close".
         var fb = F(13, Weight.Semibold);
-        float bw = MeasureButton(c, null, Strings.Close, false, fb) + 24 * S;
-        Button(c, ZDlgOk, new RectF(r.CenterX - bw / 2, r.Bottom - 26 * S - 36 * S, bw, 36 * S), null, Strings.Close, Btn.Secondary, CloseDialog, font: fb);
+        bool newer = _update == UpdateState.Available && _latest is not null;
+        var icon = newer ? Icons.Download : Icons.Refresh;
+        string label = newer ? Strings.Download(_latest!.Value.Version) : Strings.CheckForUpdates;
+        float uw = MeasureButton(c, icon, label, false, fb) + 8 * S;
+        float cw = MeasureButton(c, null, Strings.Close, false, fb) + 24 * S;
+        float bh = 36 * S, bx = MathF.Round(r.CenterX - (uw + 10 * S + cw) / 2), by = r.Bottom - 26 * S - bh;
+        Button(c, ZDlgUpdate, new RectF(bx, by, uw, bh), icon, label, newer ? Btn.Primary : Btn.Secondary,
+            newer ? OpenLatestRelease : CheckForUpdates, enabled: _update != UpdateState.Checking, font: fb);
+        Button(c, ZDlgOk, new RectF(bx + uw + 10 * S, by, cw, bh), null, Strings.Close, Btn.Secondary, CloseDialog, font: fb);
+    }
+
+    /// <summary>"Version 1.0.0 · .NET 10.0", with the result of the update check, if any, after the version.</summary>
+    void PaintVersionLine(ICanvas c, RectF r)
+    {
+        var f = F(12);
+        string head = Strings.Version(Version), tail = " · .NET " + Environment.Version.ToString(2);
+        var (status, color) = _update switch
+        {
+            UpdateState.Checking => (Strings.CheckingForUpdates, T.TextMuted),
+            UpdateState.UpToDate => (Strings.UpToDate, T.TextSecondary),
+            UpdateState.Available when _latest is { } latest => (Strings.NewVersion(latest.Version), T.Dark ? T.AccentHover : T.Accent),
+            UpdateState.Failed => (Strings.UpdateCheckFailed, T.Danger),
+            _ => ((string?)null, T.TextMuted),
+        };
+        if (status is null)
+        {
+            c.DrawText(head + tail, r, f, T.TextMuted, TextAlign.Center);
+            return;
+        }
+        head += " · ";
+        float hw = c.MeasureText(head, f), sw = c.MeasureText(status, f), tw = c.MeasureText(tail, f);
+        if (hw + sw + tw > r.W) { tail = ""; tw = 0; } // the .NET version is the first thing to go
+        float x = MathF.Round(r.CenterX - (hw + sw + tw) / 2);
+        c.DrawText(head, new RectF(x, r.Y, hw + 2 * S, r.H), f, T.TextMuted, TextAlign.Left, Trim.None);
+        c.DrawText(status, new RectF(x + hw, r.Y, sw + 2 * S, r.H), f, color, TextAlign.Left, Trim.None);
+        if (tw > 0) c.DrawText(tail, new RectF(x + hw + sw, r.Y, tw + 2 * S, r.H), f, T.TextMuted, TextAlign.Left, Trim.None);
     }
 
     void PaintToast(ICanvas c)

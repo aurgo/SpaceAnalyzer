@@ -9,8 +9,10 @@ namespace SpaceAnalyzer.UI;
 /// </summary>
 public sealed partial class MainView
 {
-    public const string Version = "1.0.0";
-    public const string RepoUrl = "https://github.com/aurgo/SpaceAnalyzer";
+    /// <summary>From &lt;Version&gt; in Directory.Build.props; the release workflow checks that the tag matches it.</summary>
+    public static readonly string Version = typeof(MainView).Assembly.GetName().Version is { } v
+        ? $"{v.Major}.{v.Minor}.{Math.Max(0, v.Build)}"
+        : "0.0.0";
 
     // Timers (ids shared with the platform host).
     const int TimerScan = 1, TimerAnim = 2, TimerTip = 3, TimerCard = 4, TimerToast = 5, TimerResize = 6, TimerSearch = 7;
@@ -19,7 +21,7 @@ public sealed partial class MainView
     const int ZHome = 1, ZOpen = 2, ZRescan = 3, ZBack = 4, ZForward = 5, ZUp = 6, ZSearch = 7, ZSearchClear = 8,
               ZSidebarToggle = 9, ZMore = 10, ZMode = 11, // 11..13
               ZTreemap = 20, ZCancel = 21, ZChoose = 22, ZHomeFolder = 23, ZResume = 24, ZInfoPath = 25,
-              ZDlgBackdrop = 30, ZDlgCard = 31, ZDlgCancel = 32, ZDlgOk = 33, ZDlgLink = 34,
+              ZDlgBackdrop = 30, ZDlgCard = 31, ZDlgCancel = 32, ZDlgOk = 33, ZDlgLink = 34, ZDlgUpdate = 35,
               ZAction = 40,    // 40..43
               ZCrumb = 100, ZCrumbMore = 199, ZType = 200, ZLargest = 300, ZDrive = 400;
 
@@ -88,6 +90,12 @@ public sealed partial class MainView
     string? _toast;
     bool _toastError;
     long _toastUntil;
+
+    // ---- check for updates (only when the user presses the button: the app doesn't go online otherwise)
+    internal enum UpdateState { None, Checking, UpToDate, Available, Failed }
+    UpdateState _update;
+    GitHub.Release? _latest;
+    Task? _updateTask;
 
     public MainView(IPlatform platform)
     {
@@ -924,12 +932,39 @@ public sealed partial class MainView
         }
     }
 
-    /// <summary>Opens the project on GitHub; without a browser the address goes to the clipboard instead.</summary>
-    void OpenRepo()
+    /// <summary>Opens a web page; without a browser the address goes to the clipboard instead.</summary>
+    void OpenWeb(string url)
     {
-        if (P.OpenUrl(RepoUrl)) return;
-        P.CopyText(RepoUrl);
+        if (P.OpenUrl(url)) return;
+        P.CopyText(url);
         ShowToast(Strings.BrowserFailed, error: true);
+    }
+
+    /// <summary>Asks GitHub for the latest release on a worker thread (the request blocks).</summary>
+    void CheckForUpdates()
+    {
+        if (_update == UpdateState.Checking) return;
+        _update = UpdateState.Checking;
+        _updateTask = Task.Run(() =>
+        {
+            GitHub.Release? latest = null;
+            try { latest = GitHub.ParseLatestRelease(P.DownloadText(GitHub.LatestReleaseApi)); }
+            catch (Exception ex) { ErrorLog.Write(ex); }
+            P.Post(() =>
+            {
+                _latest = latest;
+                _update = latest is not { } r ? UpdateState.Failed
+                    : GitHub.IsNewer(r.Version, Version) ? UpdateState.Available
+                    : UpdateState.UpToDate;
+                P.Invalidate();
+            });
+        });
+        P.Invalidate();
+    }
+
+    void OpenLatestRelease()
+    {
+        if (_latest is { } r) OpenWeb(r.Url);
     }
 
     void TrashNow(FileNode node)
@@ -1045,5 +1080,8 @@ public sealed partial class MainView
     internal string? ToastText => _toast;
     internal bool DialogOpen => _dialog != DialogKind.None;
     internal RectF? RepoLinkRect => FindZone(ZDlgLink)?.R;
+    internal RectF? UpdateButtonRect => FindZone(ZDlgUpdate)?.R;
+    internal UpdateState Update => _update;
+    internal Task? UpdateTask => _updateTask;
     internal RectF TreemapRect => _tmRect;
 }

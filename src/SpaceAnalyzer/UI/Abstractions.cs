@@ -72,6 +72,11 @@ public interface IPlatform
     bool OpenPath(string path);
     /// <summary>Opens a web address in the default browser.</summary>
     bool OpenUrl(string url);
+    /// <summary>
+    /// Fetches a small text document over HTTPS with the system's own network stack, or null on any failure.
+    /// Blocks, so call it off the UI thread. Only "check for updates" uses it, when the user presses it.
+    /// </summary>
+    string? DownloadText(string url);
     bool RevealPath(string path);
     bool MoveToTrash(string path, out string? error);
     void CopyText(string text);
@@ -91,6 +96,8 @@ public sealed class HeadlessPlatform : IPlatform
     public readonly List<Action> Posted = [];
     public string Title = "";
     public string? Clipboard, OpenedUrl;
+    /// <summary>What <see cref="DownloadText"/> answers; null, as if there were no network.</summary>
+    public string? WebText;
     public bool IsMac { get; init; } = OperatingSystem.IsMacOS();
     public void Invalidate() { }
     public void Post(Action action) { lock (Posted) Posted.Add(action); }
@@ -107,6 +114,7 @@ public sealed class HeadlessPlatform : IPlatform
     public string? PickFolder(string title) => null;
     public bool OpenPath(string path) => false;
     public bool OpenUrl(string url) { OpenedUrl = url; return false; }
+    public string? DownloadText(string url) => WebText;
     public bool RevealPath(string path) => false;
     public bool MoveToTrash(string path, out string? error) { error = "headless"; return false; }
     public void CopyText(string text) => Clipboard = text;

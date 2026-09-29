@@ -186,6 +186,13 @@ public class MainViewTests
 
     static void Paint(MainView v, Surface s) => v.Paint(new SoftCanvas(s));
 
+    static void Click(MainView v, RectF r)
+    {
+        v.OnMouseMove(r.CenterX, r.CenterY);
+        v.OnMouseDown(r.CenterX, r.CenterY, MouseButton.Left, 1, Mods.None);
+        v.OnMouseUp(r.CenterX, r.CenterY, MouseButton.Left);
+    }
+
     [Fact]
     public void Double_click_zooms_in_and_backspace_zooms_out()
     {
@@ -313,15 +320,48 @@ public class MainViewTests
         var (v, p, s) = Create();
         v.Execute(Cmd.About);
         Paint(v, s);
-        var link = Assert.NotNull(v.RepoLinkRect);
-        v.OnMouseMove(link.CenterX, link.CenterY);
-        v.OnMouseDown(link.CenterX, link.CenterY, MouseButton.Left, 1, Mods.None);
-        v.OnMouseUp(link.CenterX, link.CenterY, MouseButton.Left);
+        Click(v, Assert.NotNull(v.RepoLinkRect));
         Assert.Equal("https://github.com/aurgo/SpaceAnalyzer", p.OpenedUrl);
         // There is no browser headless: the address goes to the clipboard instead, and the dialog stays open.
         Assert.Equal(p.OpenedUrl, p.Clipboard);
         Assert.NotNull(v.ToastText);
         Assert.True(v.DialogOpen);
+    }
+
+    /// <summary>Opens About, presses "Check for updates" and waits for the (fake) answer from GitHub.</summary>
+    static void CheckForUpdates(MainView v, HeadlessPlatform p, Surface s, string? answer)
+    {
+        p.WebText = answer;
+        v.Execute(Cmd.About);
+        Paint(v, s);
+        Click(v, Assert.NotNull(v.UpdateButtonRect));
+        Assert.Equal(MainView.UpdateState.Checking, v.Update);
+        Paint(v, s);
+        Assert.True(v.UpdateTask!.Wait(TimeSpan.FromSeconds(10)));
+        p.RunPosted();
+        Paint(v, s);
+    }
+
+    [Fact]
+    public void Check_for_updates_offers_the_newer_version()
+    {
+        var (v, p, s) = Create();
+        Assert.Equal(MainView.UpdateState.None, v.Update); // nothing goes online by itself
+        CheckForUpdates(v, p, s, """{"tag_name": "v99.1.0", "author": {"tag_name": "v1.0.0"}}""");
+        Assert.Equal(MainView.UpdateState.Available, v.Update);
+        Click(v, Assert.NotNull(v.UpdateButtonRect)); // the button is now "Download 99.1.0"
+        Assert.Equal("https://github.com/aurgo/SpaceAnalyzer/releases/tag/v99.1.0", p.OpenedUrl);
+    }
+
+    [Fact]
+    public void Check_for_updates_says_up_to_date_or_that_it_could_not_check()
+    {
+        var (v, p, s) = Create();
+        CheckForUpdates(v, p, s, $$"""{"tag_name": "v{{MainView.Version}}"}""");
+        Assert.Equal(MainView.UpdateState.UpToDate, v.Update);
+        CheckForUpdates(v, p, s, null); // offline
+        Assert.Equal(MainView.UpdateState.Failed, v.Update);
+        Assert.Null(p.OpenedUrl);
     }
 
     /// <summary>

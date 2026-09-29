@@ -494,6 +494,51 @@ sealed unsafe class WinHost : IPlatform
             return Shell32.ShellExecuteW(_hwnd, null, p, null, null, 1) > 32;
     }
 
+    /// <summary>With WinHTTP, which uses the system's proxy settings and certificate store.</summary>
+    public string? DownloadText(string url)
+    {
+        const uint AutomaticProxy = 4, Secure = 0x00800000, StatusCode = 19, AsNumber = 0x20000000;
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) return null;
+        IntPtr session = IntPtr.Zero, connection = IntPtr.Zero, request = IntPtr.Zero;
+        try
+        {
+            fixed (char* agent = "SpaceAnalyzer/" + MainView.Version)
+                session = WinHttp.WinHttpOpen(agent, AutomaticProxy, null, null, 0);
+            if (session == IntPtr.Zero) return null;
+            WinHttp.WinHttpSetTimeouts(session, 10000, 10000, 10000, 10000);
+            fixed (char* host = uri.Host)
+                connection = WinHttp.WinHttpConnect(session, host, (ushort)uri.Port, 0);
+            if (connection == IntPtr.Zero) return null;
+            fixed (char* verb = "GET")
+            fixed (char* path = uri.PathAndQuery)
+                request = WinHttp.WinHttpOpenRequest(connection, verb, path, null, null, null, Secure);
+            if (request == IntPtr.Zero
+                || WinHttp.WinHttpSendRequest(request, null, 0, null, 0, 0, 0) == 0
+                || WinHttp.WinHttpReceiveResponse(request, IntPtr.Zero) == 0)
+                return null;
+            uint status = 0, size = sizeof(uint);
+            if (WinHttp.WinHttpQueryHeaders(request, StatusCode | AsNumber, null, &status, &size, null) == 0 || status != 200)
+                return null;
+
+            var body = new MemoryStream();
+            byte* buffer = stackalloc byte[8192];
+            while (body.Length < 1 << 20)
+            {
+                uint read;
+                if (WinHttp.WinHttpReadData(request, buffer, 8192, &read) == 0) return null;
+                if (read == 0) break;
+                body.Write(new ReadOnlySpan<byte>(buffer, (int)read));
+            }
+            return System.Text.Encoding.UTF8.GetString(body.GetBuffer(), 0, (int)body.Length);
+        }
+        finally
+        {
+            if (request != IntPtr.Zero) WinHttp.WinHttpCloseHandle(request);
+            if (connection != IntPtr.Zero) WinHttp.WinHttpCloseHandle(connection);
+            if (session != IntPtr.Zero) WinHttp.WinHttpCloseHandle(session);
+        }
+    }
+
     /// <summary>Opens Explorer with the item selected.</summary>
     public bool RevealPath(string path)
     {

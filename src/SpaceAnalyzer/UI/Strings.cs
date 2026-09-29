@@ -114,6 +114,12 @@ public static class Strings
     public static string AboutLine2 => T("Un único archivo, sin instalación y sin dependencias de interfaz.", "One single file: no installer, no UI framework.");
     public static string AboutLine3 => T("Doble clic para entrar en una carpeta · rueda o Retroceso para salir", "Double-click to zoom into a folder · wheel or Backspace to zoom out");
     public static string BrowserFailed => T("No se pudo abrir el navegador; enlace copiado", "Could not open the browser; link copied");
+    public static string CheckForUpdates => T("Buscar actualizaciones", "Check for updates");
+    public static string CheckingForUpdates => T("buscando actualizaciones…", "checking for updates…");
+    public static string UpToDate => T("es la más reciente", "up to date");
+    public static string NewVersion(string v) => T($"hay una nueva: {v}", $"{v} is available");
+    public static string UpdateCheckFailed => T("no se pudo comprobar", "couldn't check for updates");
+    public static string Download(string v) => T($"Descargar {v}", $"Download {v}");
     public static string Language => T("Idioma", "Language");
 
     public static string CategoryName(FileCategory c) => c switch

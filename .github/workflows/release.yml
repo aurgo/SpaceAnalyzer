@@ -113,6 +113,16 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v7
+      # The app reports <Version> and "Check for updates" compares it with the latest tag: they must be equal.
+      - name: The tag matches the app version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' Directory.Build.props)"
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::Tag $TAG does not match <Version>$version</Version> in Directory.Build.props. Update it and tag again."
+            exit 1
+          fi
       - uses: actions/download-artifact@v8
         with:
           pattern: dist-*

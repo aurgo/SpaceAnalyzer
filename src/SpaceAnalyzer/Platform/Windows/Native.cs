@@ -184,6 +184,21 @@ static unsafe partial class Kernel32
     [LibraryImport(Lib)] public static partial ushort GetUserDefaultUILanguage();
 }
 
+static unsafe partial class WinHttp
+{
+    const string Lib = "winhttp.dll";
+
+    [LibraryImport(Lib)] public static partial IntPtr WinHttpOpen(char* agent, uint accessType, char* proxy, char* proxyBypass, uint flags);
+    [LibraryImport(Lib)] public static partial int WinHttpSetTimeouts(IntPtr handle, int resolve, int connect, int send, int receive);
+    [LibraryImport(Lib)] public static partial IntPtr WinHttpConnect(IntPtr session, char* server, ushort port, uint reserved);
+    [LibraryImport(Lib)] public static partial IntPtr WinHttpOpenRequest(IntPtr connect, char* verb, char* path, char* version, char* referrer, char** acceptTypes, uint flags);
+    [LibraryImport(Lib)] public static partial int WinHttpSendRequest(IntPtr request, char* headers, uint headersLength, void* optional, uint optionalLength, uint totalLength, nuint context);
+    [LibraryImport(Lib)] public static partial int WinHttpReceiveResponse(IntPtr request, IntPtr reserved);
+    [LibraryImport(Lib)] public static partial int WinHttpQueryHeaders(IntPtr request, uint infoLevel, char* name, void* buffer, uint* length, uint* index);
+    [LibraryImport(Lib)] public static partial int WinHttpReadData(IntPtr request, void* buffer, uint toRead, uint* read);
+    [LibraryImport(Lib)] public static partial int WinHttpCloseHandle(IntPtr handle);
+}
+
 static unsafe partial class Dwm
 {
     [LibraryImport("dwmapi.dll")] public static partial int DwmSetWindowAttribute(IntPtr hwnd, uint attribute, void* value, uint size);
