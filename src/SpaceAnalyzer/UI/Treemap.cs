@@ -26,7 +26,9 @@ public sealed class Cell
     public int Level;
     public bool Header;
     public float Radius;
-    public long OthersCount, OthersSize;
+    public long OthersCount;
+    /// <summary>Bytes of a block that isn't one file or folder: its small items together, or the free space.</summary>
+    public long BlockSize;
     /// <summary>For <see cref="CellKind.Others"/>: the type taking most of the space, and the size-weighted age.</summary>
     public FileCategory OthersCategory;
     public long OthersTicks;
@@ -152,9 +154,9 @@ public sealed class TreemapBuilder
                 CellKind.Others => new Cell
                 {
                     Node = dir, R = r, Kind = CellKind.Others, Level = level,
-                    OthersCount = it.Count, OthersSize = it.Size, OthersCategory = it.Category, OthersTicks = it.Ticks,
+                    OthersCount = it.Count, BlockSize = it.Size, OthersCategory = it.Category, OthersTicks = it.Ticks,
                 },
-                CellKind.FreeSpace => new Cell { R = r, Kind = CellKind.FreeSpace, Level = level },
+                CellKind.FreeSpace => new Cell { R = r, Kind = CellKind.FreeSpace, Level = level, BlockSize = it.Size },
                 _ => new Cell { Node = it.Node, R = r, Kind = CellKind.File, Level = level },
             };
             c.Radius = RadiusFor(c.R, level);
@@ -375,7 +377,7 @@ public sealed class TreemapPainter
                 string label = Strings.SmallItems(cell.OthersCount);
                 if (c.MeasureText(label, _label) > cell.R.W - 8 * S)
                     label = Strings.MoreItems(cell.OthersCount);
-                QueueBlockLabel(cell, col, label, Fmt.Size(cell.OthersSize), Color.Lerp(col, T.LabelOn(col), 0.75f));
+                QueueBlockLabel(cell, col, label, Fmt.Size(cell.BlockSize), Color.Lerp(col, T.LabelOn(col), 0.75f));
                 break;
             }
             case CellKind.FreeSpace:
@@ -383,7 +385,7 @@ public sealed class TreemapPainter
                 c.FillRoundRect(cell.R, cell.Radius, T.FreeFill);
                 Hatch(c, cell.R, T.FreeHatch, 7 * S);
                 c.StrokeRoundRect(cell.R.Deflate(0.5f), cell.Radius, T.FolderBorder, 1);
-                QueueBlockLabel(cell, T.FreeFill, Strings.FreeSpace, null, T.FreeText);
+                QueueBlockLabel(cell, T.FreeFill, Strings.FreeSpace, Fmt.Size(cell.BlockSize), T.FreeText);
                 break;
             }
         }

@@ -168,6 +168,15 @@ public class TreemapTests
         Assert.Same(biggest, cell.Node);
         Assert.Same(cell, TreemapBuilder.HitTest(root, cell.R.CenterX, cell.R.CenterY));
     }
+
+    [Fact]
+    public void The_free_space_block_knows_its_size()
+    {
+        var tree = DemoTree.Build();
+        var root = new TreemapBuilder { S = 1, FreeSpace = tree.Size / 3 }.Build(tree, new RectF(0, 0, 1200, 800));
+        var free = Assert.Single(root.Kids!, k => k.Kind == CellKind.FreeSpace);
+        Assert.Equal(tree.Size / 3, free.BlockSize); // painted under "Free space", no need to click it
+    }
 }
 
 /// <summary>The whole UI, driven headlessly: paint, click, type and navigate like a user would.</summary>

@@ -342,7 +342,7 @@ public sealed partial class MainView
                 break;
             case CellKind.Others:
                 title = Strings.SmallItems(cell.OthersCount);
-                line1 = $"{Fmt.Size(cell.OthersSize)}  ·  {Fmt.Percent(cell.OthersSize / viewSize)} {Strings.OfView}";
+                line1 = $"{Fmt.Size(cell.BlockSize)}  ·  {Fmt.Percent(cell.BlockSize / viewSize)} {Strings.OfView}";
                 line2 = node!.Name;
                 path = node.FullPath;
                 dot = _painter.OthersColor(cell).Lighten(0.25f);
