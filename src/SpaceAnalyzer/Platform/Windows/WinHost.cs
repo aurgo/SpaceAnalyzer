@@ -488,6 +488,12 @@ sealed unsafe class WinHost : IPlatform
             return Shell32.ShellExecuteW(_hwnd, null, p, null, dir, 1) > 32;
     }
 
+    public bool OpenUrl(string url)
+    {
+        fixed (char* p = url)
+            return Shell32.ShellExecuteW(_hwnd, null, p, null, null, 1) > 32;
+    }
+
     /// <summary>Opens Explorer with the item selected.</summary>
     public bool RevealPath(string path)
     {

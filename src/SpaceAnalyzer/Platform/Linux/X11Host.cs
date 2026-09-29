@@ -626,6 +626,8 @@ sealed unsafe class X11Host : IPlatform
 
     public bool OpenPath(string path) => Launch("xdg-open", path);
 
+    public bool OpenUrl(string url) => Launch("xdg-open", url);
+
     public bool RevealPath(string path)
     {
         // The FileManager1 D-Bus interface selects the item (Nautilus, Dolphin, Nemo, Thunar...).

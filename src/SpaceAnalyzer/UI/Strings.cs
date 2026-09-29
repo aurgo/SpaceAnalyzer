@@ -113,6 +113,7 @@ public static class Strings
     public static string AboutLine1 => T("Visualizador de espacio en disco inspirado en el clásico SpaceMonger.", "Disk space visualizer inspired by the classic SpaceMonger.");
     public static string AboutLine2 => T("Un único archivo, sin instalación y sin dependencias de interfaz.", "One single file: no installer, no UI framework.");
     public static string AboutLine3 => T("Doble clic para entrar en una carpeta · rueda o Retroceso para salir", "Double-click to zoom into a folder · wheel or Backspace to zoom out");
+    public static string BrowserFailed => T("No se pudo abrir el navegador; enlace copiado", "Could not open the browser; link copied");
     public static string Language => T("Idioma", "Language");
 
     public static string CategoryName(FileCategory c) => c switch

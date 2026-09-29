@@ -70,6 +70,8 @@ public interface IPlatform
     void SetTitle(string title);
     string? PickFolder(string title);
     bool OpenPath(string path);
+    /// <summary>Opens a web address in the default browser.</summary>
+    bool OpenUrl(string url);
     bool RevealPath(string path);
     bool MoveToTrash(string path, out string? error);
     void CopyText(string text);
@@ -88,7 +90,7 @@ public sealed class HeadlessPlatform : IPlatform
 {
     public readonly List<Action> Posted = [];
     public string Title = "";
-    public string? Clipboard;
+    public string? Clipboard, OpenedUrl;
     public bool IsMac { get; init; } = OperatingSystem.IsMacOS();
     public void Invalidate() { }
     public void Post(Action action) { lock (Posted) Posted.Add(action); }
@@ -104,6 +106,7 @@ public sealed class HeadlessPlatform : IPlatform
     public void SetTitle(string title) => Title = title;
     public string? PickFolder(string title) => null;
     public bool OpenPath(string path) => false;
+    public bool OpenUrl(string url) { OpenedUrl = url; return false; }
     public bool RevealPath(string path) => false;
     public bool MoveToTrash(string path, out string? error) { error = "headless"; return false; }
     public void CopyText(string text) => Clipboard = text;

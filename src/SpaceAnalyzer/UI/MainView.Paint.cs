@@ -5,7 +5,7 @@ namespace SpaceAnalyzer.UI;
 
 public sealed partial class MainView
 {
-    enum Btn { Primary, Secondary, Ghost, Danger }
+    enum Btn { Primary, Secondary, Ghost, Danger, Link }
 
     FontSpec F(float size, Weight weight = Weight.Regular) => new(size * S, weight);
     FontSpec SearchFont => F(13);
@@ -22,16 +22,13 @@ public sealed partial class MainView
             default: PaintBrowse(c); break;
         }
 
-        PaintToast(c);
         if (_dialog != DialogKind.None)
         {
             _zones.Clear();
             PaintDialog(c);
         }
-        else if (_popup is null)
-        {
-            PaintTooltip(c);
-        }
+        PaintToast(c); // above an open dialog too, like the one its link can show
+        if (_dialog == DialogKind.None && _popup is null) PaintTooltip(c);
         PaintMenu(c);
     }
 
@@ -717,7 +714,7 @@ public sealed partial class MainView
     void PaintAboutDialog(ICanvas c)
     {
         float w = Math.Min(540 * S, W - 48 * S);
-        var r = DialogCard(c, w, 300 * S);
+        var r = DialogCard(c, w, 340 * S);
         float y = r.Y + 30 * S;
         PaintLogo(c, new RectF(r.CenterX - 30 * S, y, 60 * S, 60 * S));
         y += 72 * S;
@@ -731,6 +728,11 @@ public sealed partial class MainView
         c.DrawText(Strings.AboutLine2, inner.WithY(y), F(12.5f), T.TextSecondary, TextAlign.Center);
         y += 20 * S;
         c.DrawText(Strings.AboutLine3, inner.WithY(y), F(11.5f), T.TextMuted, TextAlign.Center);
+        y += 30 * S;
+        var fl = F(12.5f, Weight.Medium);
+        string repo = RepoUrl["https://".Length..];
+        float lw = MeasureButton(c, Icons.GitHub, repo, false, fl);
+        Button(c, ZDlgLink, new RectF(r.CenterX - lw / 2, y, lw, 28 * S), Icons.GitHub, repo, Btn.Link, OpenRepo, font: fl);
         var fb = F(13, Weight.Semibold);
         float bw = MeasureButton(c, null, Strings.Close, false, fb) + 24 * S;
         Button(c, ZDlgOk, new RectF(r.CenterX - bw / 2, r.Bottom - 26 * S - 36 * S, bw, 36 * S), null, Strings.Close, Btn.Secondary, CloseDialog, font: fb);
@@ -808,6 +810,10 @@ public sealed partial class MainView
             case Btn.Ghost:
                 bg = down ? T.SurfacePressed : hot ? T.SurfaceHover : Color.Transparent;
                 fg = hot ? T.TextPrimary : T.TextSecondary;
+                break;
+            case Btn.Link:
+                bg = down ? T.AccentSoft.Over(T.SurfacePressed) : hot ? T.AccentSoft.Over(T.Surface) : Color.Transparent;
+                fg = T.Dark ? T.AccentHover : T.Accent; // the lighter accent reads better on dark surfaces
                 break;
             default:
                 bg = down ? T.SurfacePressed : hot ? T.SurfaceHover : T.Surface;

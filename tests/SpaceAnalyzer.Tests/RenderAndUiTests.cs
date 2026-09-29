@@ -307,6 +307,23 @@ public class MainViewTests
         Assert.NotNull(v.ToastText);
     }
 
+    [Fact]
+    public void About_links_to_the_GitHub_repository()
+    {
+        var (v, p, s) = Create();
+        v.Execute(Cmd.About);
+        Paint(v, s);
+        var link = Assert.NotNull(v.RepoLinkRect);
+        v.OnMouseMove(link.CenterX, link.CenterY);
+        v.OnMouseDown(link.CenterX, link.CenterY, MouseButton.Left, 1, Mods.None);
+        v.OnMouseUp(link.CenterX, link.CenterY, MouseButton.Left);
+        Assert.Equal("https://github.com/aurgo/SpaceAnalyzer", p.OpenedUrl);
+        // There is no browser headless: the address goes to the clipboard instead, and the dialog stays open.
+        Assert.Equal(p.OpenedUrl, p.Clipboard);
+        Assert.NotNull(v.ToastText);
+        Assert.True(v.DialogOpen);
+    }
+
     /// <summary>
     /// Zooms into every folder of the demo tree in a small window (like a 1024×768 screen) and paints it:
     /// every sidebar/legend combination (1, 2, 3... file types, few or many files) must lay out.
@@ -342,6 +359,9 @@ public class MainViewTests
         v.DebugHoverCard();
         Paint(v, s);
         v.DebugDialog("trash");
+        Paint(v, s);
+        v.OnKeyDown(Key.Escape, Mods.None);
+        v.DebugDialog("about");
         Paint(v, s);
         v.OnKeyDown(Key.Escape, Mods.None);
         v.Execute(Cmd.OpenMenu);

@@ -620,6 +620,12 @@ sealed unsafe class MacHost : IPlatform
 
     public bool OpenPath(string path) => GetBool(Workspace, "openURL:", FileUrl(path));
 
+    public bool OpenUrl(string url)
+    {
+        var nsUrl = Send(Class("NSURL"), "URLWithString:", Str(url)); // nil if the address is malformed
+        return nsUrl != IntPtr.Zero && GetBool(Workspace, "openURL:", nsUrl);
+    }
+
     public bool RevealPath(string path) =>
         ((delegate* unmanaged<IntPtr, IntPtr, IntPtr, IntPtr, byte>)MsgSend)(
             Workspace, Sel("selectFile:inFileViewerRootedAtPath:"), Str(path), Str("")) != 0;

@@ -10,6 +10,7 @@ namespace SpaceAnalyzer.UI;
 public sealed partial class MainView
 {
     public const string Version = "1.0.0";
+    public const string RepoUrl = "https://github.com/aurgo/SpaceAnalyzer";
 
     // Timers (ids shared with the platform host).
     const int TimerScan = 1, TimerAnim = 2, TimerTip = 3, TimerCard = 4, TimerToast = 5, TimerResize = 6, TimerSearch = 7;
@@ -18,7 +19,7 @@ public sealed partial class MainView
     const int ZHome = 1, ZOpen = 2, ZRescan = 3, ZBack = 4, ZForward = 5, ZUp = 6, ZSearch = 7, ZSearchClear = 8,
               ZSidebarToggle = 9, ZMore = 10, ZMode = 11, // 11..13
               ZTreemap = 20, ZCancel = 21, ZChoose = 22, ZHomeFolder = 23, ZResume = 24, ZInfoPath = 25,
-              ZDlgBackdrop = 30, ZDlgCard = 31, ZDlgCancel = 32, ZDlgOk = 33,
+              ZDlgBackdrop = 30, ZDlgCard = 31, ZDlgCancel = 32, ZDlgOk = 33, ZDlgLink = 34,
               ZAction = 40,    // 40..43
               ZCrumb = 100, ZCrumbMore = 199, ZType = 200, ZLargest = 300, ZDrive = 400;
 
@@ -923,6 +924,14 @@ public sealed partial class MainView
         }
     }
 
+    /// <summary>Opens the project on GitHub; without a browser the address goes to the clipboard instead.</summary>
+    void OpenRepo()
+    {
+        if (P.OpenUrl(RepoUrl)) return;
+        P.CopyText(RepoUrl);
+        ShowToast(Strings.BrowserFailed, error: true);
+    }
+
     void TrashNow(FileNode node)
     {
         string path = node.FullPath;
@@ -1035,5 +1044,6 @@ public sealed partial class MainView
     internal bool MenuOpen => _popup is not null;
     internal string? ToastText => _toast;
     internal bool DialogOpen => _dialog != DialogKind.None;
+    internal RectF? RepoLinkRect => FindZone(ZDlgLink)?.R;
     internal RectF TreemapRect => _tmRect;
 }
