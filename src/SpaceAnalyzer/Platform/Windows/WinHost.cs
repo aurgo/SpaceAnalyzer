@@ -64,7 +64,7 @@ sealed unsafe class WinHost : IPlatform
         _arrow = LoadCursorW(IntPtr.Zero, 32512); // IDC_ARROW
         _hand = LoadCursorW(IntPtr.Zero, 32649);  // IDC_HAND
         _ibeam = LoadCursorW(IntPtr.Zero, 32513); // IDC_IBEAM
-        _view = new MainView(this);
+        _view = new MainView(this, UpdatePrefs.ForThisUser());
 
         fixed (char* className = "SpaceAnalyzerWindow")
         fixed (char* title = Strings.AppName)

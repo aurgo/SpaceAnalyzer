@@ -90,6 +90,7 @@ public sealed partial class MainView
         rx -= bh + 2 * S;
         IconButton(c, ZAskAi, new RectF(rx - bh, top, bh, bh), Icons.Sparkles, () => Execute(Cmd.AskAi), Strings.AskAiTip, IsEnabled(Cmd.AskAi));
         rx -= bh + 10 * S;
+        rx = PaintUpdatePill(c, rx, top, bh);
 
         var segF = F(12.5f, Weight.Medium);
         float segW = 0;
@@ -580,7 +581,24 @@ public sealed partial class MainView
         y += bh + 22 * S;
         c.DrawText(Strings.DropHint, new RectF(0, y, W, 20 * S), F(12.5f), T.TextMuted, TextAlign.Center);
 
-        c.DrawText($"v{Version}", new RectF(0, H - 30 * S, W - 16 * S, 20 * S), F(11.5f), T.TextMuted, TextAlign.Right);
+        if (_update == UpdateState.Available && _latest is not null)
+            PaintUpdatePill(c, W - 16 * S, H - 46 * S, 32 * S);
+        else
+            c.DrawText($"v{Version}", new RectF(0, H - 30 * S, W - 16 * S, 20 * S), F(11.5f), T.TextMuted, TextAlign.Right);
+    }
+
+    /// <summary>
+    /// "New version 1.2.0", right-aligned at <paramref name="right"/>, once a check has found one: it opens the
+    /// download page. Returns where the next thing to its left can end (<paramref name="right"/> when there is none).
+    /// </summary>
+    float PaintUpdatePill(ICanvas c, float right, float top, float height)
+    {
+        if (_update != UpdateState.Available || _latest is not { } latest) return right;
+        var f = F(12.5f, Weight.Semibold);
+        string label = Strings.NewVersionPill(latest.Version);
+        float w = MeasureButton(c, Icons.Download, label, false, f);
+        Button(c, ZUpdatePill, new RectF(right - w, top, w, height), Icons.Download, label, Btn.Primary, OpenLatestRelease, Strings.NewVersionTip, font: f);
+        return right - w - 10 * S;
     }
 
     void PaintDriveCard(ICanvas c, int id, RectF r, VolumeInfo v)

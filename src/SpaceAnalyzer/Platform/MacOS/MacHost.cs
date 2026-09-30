@@ -51,7 +51,7 @@ sealed unsafe class MacHost : IPlatform
         _app = Send(Class("NSApplication"), "sharedApplication");
         SendLong(_app, "setActivationPolicy:", 0); // a regular app: Dock icon and menu bar
         RegisterViewClass();
-        _view = new MainView(this);
+        _view = new MainView(this, UpdatePrefs.ForThisUser());
         CreateWindow();
         BuildMainMenu();
         SetAppIcon();
@@ -148,6 +148,7 @@ sealed unsafe class MacHost : IPlatform
 
         var app = NewMenu(Strings.AppName);
         AddCmd(app, Strings.About, Cmd.About);
+        if (_view.IsEnabled(Cmd.ToggleAutoUpdate)) AddCmd(app, Strings.AutoCheckUpdates, Cmd.ToggleAutoUpdate, "");
         AddSeparator(app);
         AddStd(app, T("Ocultar SpaceAnalyzer", "Hide SpaceAnalyzer"), "hide:", "h", cmd);
         AddStd(app, T("Ocultar otros", "Hide Others"), "hideOtherApplications:", "h", cmd | opt);

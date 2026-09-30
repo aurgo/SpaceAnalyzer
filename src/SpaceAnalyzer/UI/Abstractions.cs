@@ -74,7 +74,8 @@ public interface IPlatform
     bool OpenUrl(string url);
     /// <summary>
     /// Fetches a small text document over HTTPS with the system's own network stack, or null on any failure.
-    /// Blocks, so call it off the UI thread. Only "check for updates" uses it, when the user presses it.
+    /// Blocks, so call it off the UI thread. Only "check for updates" uses it: when the user presses it, and once a
+    /// day at start unless the automatic check is turned off.
     /// </summary>
     string? DownloadText(string url);
     bool RevealPath(string path);
@@ -141,6 +142,8 @@ public enum Cmd
     HomeFolder,
     /// <summary>Copy a prompt about the current view (<see cref="AskAiItem"/>: about the selected item) to paste into an AI.</summary>
     AskAi, AskAiItem,
+    /// <summary>Turns the daily check for a new version at start on or off.</summary>
+    ToggleAutoUpdate,
     /// <summary>Menu ids at or above this value scan the volume with that index.</summary>
     VolumeBase = 1000,
 }

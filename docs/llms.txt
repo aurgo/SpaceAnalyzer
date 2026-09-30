@@ -1,6 +1,6 @@
 # SpaceAnalyzer
 
-> SpaceAnalyzer is a free, open-source disk space analyzer for Windows, macOS and Linux. It draws a drive or folder as a nested treemap, like the classic SpaceMonger, so you can see at once what takes up space and move it to the trash. Each download is a single ~2 MB executable with nothing to install, and the app only goes online if you ask it to check for updates.
+> SpaceAnalyzer is a free, open-source disk space analyzer for Windows, macOS and Linux. It draws a drive or folder as a nested treemap, like the classic SpaceMonger, so you can see at once what takes up space and move it to the trash. Each download is a single ~2 MB executable with nothing to install, and the app only goes online to ask GitHub whether there is a new version (at start, at most once a day, which can be turned off).
 
 - License: MIT. Price: free. No ads, no telemetry, no account.
 - Systems: Windows 10/11 (x64, ARM64), macOS 12+ (Apple Silicon and Intel), Linux x64/ARM64 (X11 or XWayland).

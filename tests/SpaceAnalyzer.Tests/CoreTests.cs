@@ -254,3 +254,38 @@ public class UpdateCheckTests
     public void Anything_but_a_release_fails_the_check(string? answer) =>
         Assert.Null(GitHub.ParseLatestRelease(answer));
 }
+
+public class UpdatePrefsTests
+{
+    [Fact]
+    public void Saves_and_loads_the_setting_and_the_last_check()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "sa-prefs-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            string path = Path.Combine(dir, "settings.ini");
+            var fresh = UpdatePrefs.Load(path); // no file yet: the defaults
+            Assert.True(fresh.AutoCheck);
+            Assert.Null(fresh.LastCheckUtc);
+
+            var when = new DateTime(2026, 9, 30, 8, 15, 0, DateTimeKind.Utc);
+            new UpdatePrefs(path) { AutoCheck = false, LastCheckUtc = when }.Save();
+            var loaded = UpdatePrefs.Load(path);
+            Assert.False(loaded.AutoCheck);
+            Assert.Equal(when, loaded.LastCheckUtc);
+            Assert.Equal(DateTimeKind.Utc, loaded.LastCheckUtc!.Value.Kind);
+        }
+        finally { if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true); }
+    }
+
+    [Fact]
+    public void Is_due_once_a_day_while_turned_on()
+    {
+        var now = new DateTime(2026, 9, 30, 12, 0, 0, DateTimeKind.Utc);
+        Assert.True(new UpdatePrefs().IsDue(now));
+        Assert.False(new UpdatePrefs { LastCheckUtc = now.AddHours(-23) }.IsDue(now));
+        Assert.True(new UpdatePrefs { LastCheckUtc = now.AddHours(-25) }.IsDue(now));
+        Assert.True(new UpdatePrefs { LastCheckUtc = now.AddDays(3) }.IsDue(now)); // the clock went back
+        Assert.False(new UpdatePrefs { AutoCheck = false }.IsDue(now));
+    }
+}

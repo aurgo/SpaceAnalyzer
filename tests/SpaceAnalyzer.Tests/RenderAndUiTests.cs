@@ -392,6 +392,98 @@ public class MainViewTests
         Assert.Null(p.OpenedUrl);
     }
 
+    /// <summary>A view whose update preferences live in a temporary file, started as the app starts it.</summary>
+    static (MainView View, HeadlessPlatform Platform, Surface Surface, UpdatePrefs Prefs) StartWithPrefs(
+        string? answer, Action<UpdatePrefs>? setUp = null)
+    {
+        var prefs = new UpdatePrefs(Path.Combine(Path.GetTempPath(), "sa-prefs-" + Guid.NewGuid().ToString("N"), "settings.ini"));
+        setUp?.Invoke(prefs);
+        var p = new HeadlessPlatform { WebText = answer };
+        var v = new MainView(p, prefs);
+        v.OnResize(1400, 880, 1);
+        v.Start(null);
+        v.UpdateTask?.Wait(TimeSpan.FromSeconds(10));
+        p.RunPosted();
+        v.LoadTree(DemoTree.Build(), DemoTree.Volume, TimeSpan.FromSeconds(1));
+        var s = new Surface(1400, 880);
+        Paint(v, s);
+        return (v, p, s, prefs);
+    }
+
+    static void DeletePrefs(UpdatePrefs prefs)
+    {
+        string dir = Path.GetDirectoryName(prefs.FilePath)!;
+        if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
+    }
+
+    [Fact]
+    public void At_start_a_newer_version_shows_a_button_that_opens_its_download_page()
+    {
+        var (v, p, s, prefs) = StartWithPrefs("""{"tag_name": "v99.1.0"}""");
+        try
+        {
+            Assert.Equal(MainView.UpdateState.Available, v.Update);
+            Assert.True(DateTime.UtcNow - prefs.LastCheckUtc < TimeSpan.FromMinutes(1));
+            Assert.NotNull(UpdatePrefs.Load(prefs.FilePath).LastCheckUtc); // saved, so the next start waits a day
+
+            Click(v, Assert.NotNull(v.UpdatePillRect));
+            Assert.Equal("https://github.com/aurgo/SpaceAnalyzer/releases/tag/v99.1.0", p.OpenedUrl);
+
+            // The welcome screen shows it too, where the version number was.
+            v.Execute(Cmd.Home);
+            Paint(v, s);
+            Assert.NotNull(v.UpdatePillRect);
+        }
+        finally { DeletePrefs(prefs); }
+    }
+
+    [Fact]
+    public void At_start_nothing_shows_when_up_to_date_or_offline()
+    {
+        foreach (var answer in new[] { $$"""{"tag_name": "v{{MainView.Version}}"}""", null })
+        {
+            var (v, _, _, prefs) = StartWithPrefs(answer);
+            try
+            {
+                Assert.Equal(MainView.UpdateState.None, v.Update); // nobody asked, so no "up to date" or "couldn't check"
+                Assert.Null(v.UpdatePillRect);
+            }
+            finally { DeletePrefs(prefs); }
+        }
+    }
+
+    [Fact]
+    public void At_start_it_asks_at_most_once_a_day_and_never_when_turned_off()
+    {
+        var (v, _, _, prefs) = StartWithPrefs("""{"tag_name": "v99.1.0"}""", p => p.LastCheckUtc = DateTime.UtcNow.AddHours(-2));
+        DeletePrefs(prefs);
+        Assert.Null(v.UpdateTask);
+
+        (v, _, _, prefs) = StartWithPrefs("""{"tag_name": "v99.1.0"}""", p => p.AutoCheck = false);
+        DeletePrefs(prefs);
+        Assert.Null(v.UpdateTask);
+        Assert.False(v.IsChecked(Cmd.ToggleAutoUpdate));
+    }
+
+    [Fact]
+    public void The_automatic_check_is_turned_on_and_off_from_the_menu()
+    {
+        var (v, _, _, prefs) = StartWithPrefs(null, p => p.LastCheckUtc = DateTime.UtcNow);
+        try
+        {
+            Assert.True(v.IsEnabled(Cmd.ToggleAutoUpdate));
+            Assert.True(v.IsChecked(Cmd.ToggleAutoUpdate));
+            v.Execute(Cmd.ToggleAutoUpdate);
+            Assert.False(v.IsChecked(Cmd.ToggleAutoUpdate));
+            Assert.False(UpdatePrefs.Load(prefs.FilePath).AutoCheck);
+        }
+        finally { DeletePrefs(prefs); }
+
+        // Snapshots and tests have no preferences: nothing to turn on, and nothing goes online by itself.
+        var (plain, _, _) = Create();
+        Assert.False(plain.IsEnabled(Cmd.ToggleAutoUpdate));
+    }
+
     /// <summary>
     /// Zooms into every folder of the demo tree in a small window (like a 1024×768 screen) and paints it:
     /// every sidebar/legend combination (1, 2, 3... file types, few or many files) must lay out.

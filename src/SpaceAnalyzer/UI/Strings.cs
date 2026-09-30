@@ -124,6 +124,9 @@ public static class Strings
     public static string NewVersion(string v) => T($"hay una nueva: {v}", $"{v} is available");
     public static string UpdateCheckFailed => T("no se pudo comprobar", "couldn't check for updates");
     public static string Download(string v) => T($"Descargar {v}", $"Download {v}");
+    public static string NewVersionPill(string v) => T($"Nueva versión {v}", $"New version {v}");
+    public static string NewVersionTip => T("Abre la página de descarga en GitHub", "Opens the download page on GitHub");
+    public static string AutoCheckUpdates => T("Buscar actualizaciones al abrir", "Check for updates at start");
     public static string Language => T("Idioma", "Language");
 
     public static string CategoryName(FileCategory c) => c switch

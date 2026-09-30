@@ -96,7 +96,7 @@ sealed unsafe class X11Host : IPlatform
         fixed (int* p = _wakePipe) LibC.pipe(p);
         _xfd = XConnectionNumber(_display);
 
-        _view = new MainView(this);
+        _view = new MainView(this, UpdatePrefs.ForThisUser());
         _view.SetSystemDark(SystemIsDark());
         _view.OnResize(_width, _height, _scale);
         XMapWindow(_display, _window);

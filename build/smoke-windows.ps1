@@ -37,6 +37,7 @@ function Save-Screen([string]$Name) {
 $errorLog = Join-Path (Resolve-Path $Out) "windows-errors.log"
 Remove-Item $errorLog -ErrorAction Ignore
 $env:SPACEANALYZER_ERROR_LOG = $errorLog
+$env:SPACEANALYZER_NO_UPDATE_CHECK = "1"
 
 function Assert-Running([string]$Step) {
     if ($app.HasExited) { throw "SpaceAnalyzer exited $Step (exit code $($app.ExitCode))" }

@@ -17,6 +17,7 @@ sleep 2
 
 # The app keeps running after an unexpected error: it also writes it here.
 export SPACEANALYZER_ERROR_LOG="$PWD/$OUT/linux-errors.log"
+export SPACEANALYZER_NO_UPDATE_CHECK=1
 rm -f "$SPACEANALYZER_ERROR_LOG"
 
 "$EXE" "$FOLDER" > "$OUT/linux-app.log" 2>&1 &

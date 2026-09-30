@@ -20,7 +20,7 @@ public sealed partial class MainView
     // Hit-zone ids.
     const int ZHome = 1, ZOpen = 2, ZRescan = 3, ZBack = 4, ZForward = 5, ZUp = 6, ZSearch = 7, ZSearchClear = 8,
               ZSidebarToggle = 9, ZMore = 10, ZMode = 11, // 11..13
-              ZAskAi = 14,
+              ZAskAi = 14, ZUpdatePill = 15,
               ZTreemap = 20, ZCancel = 21, ZChoose = 22, ZHomeFolder = 23, ZResume = 24, ZInfoPath = 25,
               ZDlgBackdrop = 30, ZDlgCard = 31, ZDlgCancel = 32, ZDlgOk = 33, ZDlgLink = 34, ZDlgUpdate = 35,
               ZAction = 40,    // 40..43
@@ -92,15 +92,21 @@ public sealed partial class MainView
     bool _toastError;
     long _toastUntil;
 
-    // ---- check for updates (only when the user presses the button: the app doesn't go online otherwise)
+    // ---- check for updates: when the user presses the button, and once a day at start unless turned off
     internal enum UpdateState { None, Checking, UpToDate, Available, Failed }
     UpdateState _update;
     GitHub.Release? _latest;
     Task? _updateTask;
+    readonly UpdatePrefs? _updatePrefs;
 
-    public MainView(IPlatform platform)
+    /// <param name="updatePrefs">
+    /// Whether to look for a new version at start, and when that last happened. Null (snapshots, tests) never goes
+    /// online by itself, and hides the menu item that turns it on and off.
+    /// </param>
+    public MainView(IPlatform platform, UpdatePrefs? updatePrefs = null)
     {
         P = platform;
+        _updatePrefs = updatePrefs;
         UpdateTheme();
     }
 
@@ -115,6 +121,7 @@ public sealed partial class MainView
         if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path))
             StartScan(path);
         P.SetTitle(Strings.AppName);
+        if (_updatePrefs?.IsDue(DateTime.UtcNow) == true) CheckForUpdates(automatic: true);
     }
 
     public void OnResize(float width, float height, float scale)
@@ -413,6 +420,7 @@ public sealed partial class MainView
         Cmd.AskAi => _screen == Screen.Browse && _view is not null,
         Cmd.AskAiItem => _screen == Screen.Browse && Target is not null,
         Cmd.ToggleFreeSpace => _rootIsVolume,
+        Cmd.ToggleAutoUpdate => _updatePrefs is not null,
         _ => true,
     };
 
@@ -431,6 +439,7 @@ public sealed partial class MainView
         Cmd.ThemeSystem => _themeChoice == ThemeChoice.System,
         Cmd.ThemeDark => _themeChoice == ThemeChoice.Dark,
         Cmd.ThemeLight => _themeChoice == ThemeChoice.Light,
+        Cmd.ToggleAutoUpdate => _updatePrefs?.AutoCheck == true,
         _ => false,
     };
 
@@ -489,6 +498,11 @@ public sealed partial class MainView
             case Cmd.ThemeDark: _themeChoice = ThemeChoice.Dark; UpdateTheme(); break;
             case Cmd.ThemeLight: _themeChoice = ThemeChoice.Light; UpdateTheme(); break;
             case Cmd.About: _dialog = DialogKind.About; break;
+            case Cmd.ToggleAutoUpdate:
+                _updatePrefs!.AutoCheck = !_updatePrefs.AutoCheck;
+                _updatePrefs.Save();
+                if (_updatePrefs.IsDue(DateTime.UtcNow)) CheckForUpdates(automatic: true);
+                break;
             case Cmd.Quit: P.Quit(); break;
             default:
                 int vi = (int)cmd - (int)Cmd.VolumeBase;
@@ -595,8 +609,10 @@ public sealed partial class MainView
             new((int)Cmd.LangEs, "Español", true, Strings.Spanish),
             new((int)Cmd.LangEn, "English", true, !Strings.Spanish),
             MenuEntry.Separator,
-            new((int)Cmd.About, Strings.About),
         };
+        if (_updatePrefs is not null)
+            items.Add(new((int)Cmd.ToggleAutoUpdate, Strings.AutoCheckUpdates, true, _updatePrefs.AutoCheck));
+        items.Add(new((int)Cmd.About, Strings.About));
         OpenMenu(items, _moreButton.Right, _moreButton.Bottom + 4 * S, id => Execute((Cmd)id), alignRight: true);
     }
 
@@ -948,10 +964,23 @@ public sealed partial class MainView
     }
 
     /// <summary>Asks GitHub for the latest release on a worker thread (the request blocks).</summary>
-    void CheckForUpdates()
+    void CheckForUpdates() => CheckForUpdates(automatic: false);
+
+    /// <summary>
+    /// Asks GitHub for the latest release. <paramref name="automatic"/> is the daily check at start: nobody is
+    /// waiting for it, so it says nothing unless there is a new version, and a failure goes unnoticed.
+    /// </summary>
+    void CheckForUpdates(bool automatic)
     {
         if (_update == UpdateState.Checking) return;
+        if (automatic && _update == UpdateState.Available) return;
+        var before = _update;
         _update = UpdateState.Checking;
+        if (automatic && _updatePrefs is { } prefs)
+        {
+            prefs.LastCheckUtc = DateTime.UtcNow;
+            prefs.Save();
+        }
         _updateTask = Task.Run(() =>
         {
             GitHub.Release? latest = null;
@@ -959,10 +988,10 @@ public sealed partial class MainView
             catch (Exception ex) { ErrorLog.Write(ex); }
             P.Post(() =>
             {
-                _latest = latest;
-                _update = latest is not { } r ? UpdateState.Failed
+                _latest = latest ?? _latest;
+                _update = latest is not { } r ? (automatic ? before : UpdateState.Failed)
                     : GitHub.IsNewer(r.Version, Version) ? UpdateState.Available
-                    : UpdateState.UpToDate;
+                    : automatic ? before : UpdateState.UpToDate;
                 P.Invalidate();
             });
         });
@@ -1097,5 +1126,6 @@ public sealed partial class MainView
     internal RectF? UpdateButtonRect => FindZone(ZDlgUpdate)?.R;
     internal UpdateState Update => _update;
     internal Task? UpdateTask => _updateTask;
+    internal RectF? UpdatePillRect => FindZone(ZUpdatePill)?.R;
     internal RectF TreemapRect => _tmRect;
 }
