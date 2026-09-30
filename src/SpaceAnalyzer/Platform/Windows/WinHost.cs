@@ -64,7 +64,7 @@ sealed unsafe class WinHost : IPlatform
         _arrow = LoadCursorW(IntPtr.Zero, 32512); // IDC_ARROW
         _hand = LoadCursorW(IntPtr.Zero, 32649);  // IDC_HAND
         _ibeam = LoadCursorW(IntPtr.Zero, 32513); // IDC_IBEAM
-        _view = new MainView(this, UpdatePrefs.ForThisUser());
+        _view = new MainView(this, UpdatePrefs.ForThisUser(), UpdateTarget.ForThisProcess());
 
         fixed (char* className = "SpaceAnalyzerWindow")
         fixed (char* title = Strings.AppName)
@@ -497,39 +497,63 @@ sealed unsafe class WinHost : IPlatform
     /// <summary>With WinHTTP, which uses the system's proxy settings and certificate store.</summary>
     public string? DownloadText(string url)
     {
+        var body = new MemoryStream();
+        return Fetch(url, body, 1 << 20, 10000) ? System.Text.Encoding.UTF8.GetString(body.GetBuffer(), 0, (int)body.Length) : null;
+    }
+
+    public bool DownloadFile(string url, string destination)
+    {
+        try
+        {
+            using (var file = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.None))
+                if (Fetch(url, file, 64 << 20, 30000)) return true;
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+        try { File.Delete(destination); } catch { }
+        return false;
+    }
+
+    /// <summary>
+    /// GETs <paramref name="url"/> over HTTPS with WinHTTP (which follows GitHub's redirect to its download host) and
+    /// copies the body into <paramref name="sink"/>. False on any failure, or when the body passes <paramref name="maxBytes"/>.
+    /// </summary>
+    static bool Fetch(string url, Stream sink, long maxBytes, int timeoutMs)
+    {
         const uint AutomaticProxy = 4, Secure = 0x00800000, StatusCode = 19, AsNumber = 0x20000000;
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) return null;
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) return false;
         IntPtr session = IntPtr.Zero, connection = IntPtr.Zero, request = IntPtr.Zero;
         try
         {
             fixed (char* agent = "SpaceAnalyzer/" + MainView.Version)
                 session = WinHttp.WinHttpOpen(agent, AutomaticProxy, null, null, 0);
-            if (session == IntPtr.Zero) return null;
-            WinHttp.WinHttpSetTimeouts(session, 10000, 10000, 10000, 10000);
+            if (session == IntPtr.Zero) return false;
+            WinHttp.WinHttpSetTimeouts(session, timeoutMs, timeoutMs, timeoutMs, timeoutMs);
             fixed (char* host = uri.Host)
                 connection = WinHttp.WinHttpConnect(session, host, (ushort)uri.Port, 0);
-            if (connection == IntPtr.Zero) return null;
+            if (connection == IntPtr.Zero) return false;
             fixed (char* verb = "GET")
             fixed (char* path = uri.PathAndQuery)
                 request = WinHttp.WinHttpOpenRequest(connection, verb, path, null, null, null, Secure);
             if (request == IntPtr.Zero
                 || WinHttp.WinHttpSendRequest(request, null, 0, null, 0, 0, 0) == 0
                 || WinHttp.WinHttpReceiveResponse(request, IntPtr.Zero) == 0)
-                return null;
+                return false;
             uint status = 0, size = sizeof(uint);
             if (WinHttp.WinHttpQueryHeaders(request, StatusCode | AsNumber, null, &status, &size, null) == 0 || status != 200)
-                return null;
+                return false;
 
-            var body = new MemoryStream();
             byte* buffer = stackalloc byte[8192];
-            while (body.Length < 1 << 20)
+            long total = 0;
+            while (true)
             {
                 uint read;
-                if (WinHttp.WinHttpReadData(request, buffer, 8192, &read) == 0) return null;
-                if (read == 0) break;
-                body.Write(new ReadOnlySpan<byte>(buffer, (int)read));
+                if (WinHttp.WinHttpReadData(request, buffer, 8192, &read) == 0) return false;
+                if (read == 0) return true;
+                total += read;
+                if (total > maxBytes) return false;
+                sink.Write(new ReadOnlySpan<byte>(buffer, (int)read));
             }
-            return System.Text.Encoding.UTF8.GetString(body.GetBuffer(), 0, (int)body.Length);
         }
         finally
         {

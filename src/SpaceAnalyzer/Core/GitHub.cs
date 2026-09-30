@@ -12,14 +12,14 @@ public static class GitHub
     public const string Repo = "https://github.com/aurgo/SpaceAnalyzer";
     public const string LatestReleaseApi = "https://api.github.com/repos/aurgo/SpaceAnalyzer/releases/latest";
 
-    /// <summary>A published release: its version ("1.2.0") and its page, which has the downloads.</summary>
-    public readonly record struct Release(string Version, string Url);
+    /// <summary>A published release: its version ("1.2.0"), its page, which has the downloads, and its tag ("v1.2.0").</summary>
+    public readonly record struct Release(string Version, string Url, string Tag = "");
 
     /// <summary>The release in the API's answer, or null if the answer isn't one (offline, rate limited, no releases...).</summary>
     public static Release? ParseLatestRelease(string? json)
     {
         if (json is null || TopLevelString(json, "tag_name") is not { } tag || Parse(tag) is not { } v) return null;
-        return new Release($"{v.Major}.{v.Minor}.{v.Build}", $"{Repo}/releases/tag/{Uri.EscapeDataString(tag)}");
+        return new Release($"{v.Major}.{v.Minor}.{v.Build}", $"{Repo}/releases/tag/{Uri.EscapeDataString(tag)}", tag);
     }
 
     /// <summary>True if <paramref name="version"/> is newer than <paramref name="current"/>.</summary>

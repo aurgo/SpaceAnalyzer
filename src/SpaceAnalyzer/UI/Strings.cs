@@ -127,6 +127,16 @@ public static class Strings
     public static string NewVersionPill(string v) => T($"Nueva versión {v}", $"New version {v}");
     public static string NewVersionTip => T("Abre la página de descarga en GitHub", "Opens the download page on GitHub");
     public static string AutoCheckUpdates => T("Buscar actualizaciones al abrir", "Check for updates at start");
+    public static string AutoUpdate => T("Actualizar automáticamente", "Update automatically");
+    public static string UpdateTo(string v) => T($"Actualizar a {v}", $"Update to {v}");
+    public static string UpdateTip => T("Descarga la versión nueva y la instala en lugar de esta", "Downloads the new version and installs it in place of this one");
+    public static string Updating(string v) => T($"Actualizando a {v}…", $"Updating to {v}…");
+    public static string RestartToUse(string v) => T($"Reiniciar para usar {v}", $"Restart to use {v}");
+    public static string RestartTip => T("La versión nueva ya está instalada; también se usará la próxima vez que abras la app", "The new version is installed; it is also used the next time you open the app");
+    public static string Restart => T("Reiniciar", "Restart");
+    public static string InstalledRestart(string v) => T($"{v} instalada, reinicia para usarla", $"{v} installed, restart to use it");
+    public static string UpdateFailed => T("No se pudo actualizar; descárgala desde su página", "Couldn't update; download it from its page");
+    public static string RestartFailed => T("No se pudo reiniciar; ábrela de nuevo para usar la versión nueva", "Couldn't restart; open the app again to use the new version");
     public static string Language => T("Idioma", "Language");
 
     public static string CategoryName(FileCategory c) => c switch

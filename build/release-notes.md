@@ -6,9 +6,10 @@
 
 ## What's new
 
-- **Tells you about new versions.** At start, at most once a day, it asks GitHub for the latest version; when there is a newer one, a **New version** button appears in the toolbar (and on the welcome screen) that opens its download page. Nothing is shown when you are up to date or offline.
-- It can be turned off with **Check for updates at start** in the ⋯ menu (in the app menu on macOS). *Check for updates* in About still works as before.
-- Asking GitHub for the latest version is the only thing the app goes online for; nothing about your files is ever sent.
+- **Updates itself.** At start, at most once a day, it asks GitHub for the latest version. When there is a newer one it downloads it, checks it against the release's `SHA256SUMS.txt` and puts it in place of the copy you run. A **Restart to use…** button opens it right away; otherwise the new version is used the next time you open the app.
+- Turn it off with **Update automatically** in the ⋯ menu (in the app menu on macOS); *Update to…* in About then does it when you ask.
+- Where it can't replace itself (a folder you can't write to, or the macOS and Linux *mini* builds) it shows a **New version** button that opens the download page instead.
+- Updating is the only thing the app goes online for; nothing about your files is ever sent.
 
 ## Downloads
 
@@ -38,9 +39,10 @@ The executables are not signed with a paid certificate, so the system warns the 
 
 ### Novedades
 
-- **Avisa de las versiones nuevas.** Al abrirse, como mucho una vez al día, le pregunta a GitHub cuál es la última versión; si hay una nueva, aparece un botón **Nueva versión** en la barra (y en la pantalla de inicio) que abre su página de descarga. Si ya tienes la última o no hay conexión, no muestra nada.
-- Se desactiva con **Buscar actualizaciones al abrir** en el menú ⋯ (en el menú de la aplicación en macOS). *Buscar actualizaciones* en «Acerca de» sigue funcionando igual.
-- Preguntar a GitHub por la última versión es lo único para lo que la app se conecta a Internet; nunca envía nada de tus archivos.
+- **Se actualiza sola.** Al abrirse, como mucho una vez al día, le pregunta a GitHub cuál es la última versión. Si hay una nueva, la descarga, la comprueba con el `SHA256SUMS.txt` de la versión y la pone en lugar de la que usas. El botón **Reiniciar para usar…** la abre al momento; si no, se usa la próxima vez que abras la app.
+- Se desactiva con **Actualizar automáticamente** en el menú ⋯ (en el menú de la aplicación en macOS); entonces *Actualizar a…* en «Acerca de» lo hace cuando se lo pidas.
+- Si no puede sustituirse (una carpeta sin permiso de escritura, o las versiones *mini* de macOS y Linux), muestra un botón **Nueva versión** que abre la página de descarga.
+- Actualizarse es lo único para lo que la app se conecta a Internet; nunca envía nada de tus archivos.
 
 ### Descargas
 
@@ -74,6 +76,6 @@ Los ejecutables no están firmados con un certificado de pago, así que el siste
 - **Espacio libre** de la unidad, tema claro u oscuro, español e inglés.
 - **Escaneo multihilo**. No cuenta dos veces los enlaces simbólicos ni los otros volúmenes, y usa el tamaño real en disco de los archivos dispersos.
 - **Preguntar a la IA qué borrar**: copia un prompt con lo que más ocupa para pegarlo en el chat de tu IA.
-- **Aviso de versiones nuevas** al abrirse, como mucho una vez al día (se desactiva en el menú ⋯), y **Buscar actualizaciones** en «Acerca de». Solo se conecta a Internet para eso.
+- **Se actualiza sola** al abrirse, como mucho una vez al día (se desactiva en el menú ⋯). Solo se conecta a Internet para eso.
 
 </details>

@@ -96,7 +96,7 @@ sealed unsafe class X11Host : IPlatform
         fixed (int* p = _wakePipe) LibC.pipe(p);
         _xfd = XConnectionNumber(_display);
 
-        _view = new MainView(this, UpdatePrefs.ForThisUser());
+        _view = new MainView(this, UpdatePrefs.ForThisUser(), UpdateTarget.ForThisProcess());
         _view.SetSystemDark(SystemIsDark());
         _view.OnResize(_width, _height, _scale);
         XMapWindow(_display, _window);
@@ -632,6 +632,16 @@ sealed unsafe class X11Host : IPlatform
     public string? DownloadText(string url) => FindInPath("curl") is not null
         ? RunFor(15000, "curl", "-fsSL", "--max-time", "12", url)
         : RunFor(15000, "wget", "-q", "-O", "-", "--timeout=12", url);
+
+    public bool DownloadFile(string url, string destination)
+    {
+        bool ok = (FindInPath("curl") is not null
+            ? RunFor(150000, "curl", "-fsSL", "--max-time", "140", "-o", destination, url)
+            : RunFor(150000, "wget", "-q", "-O", destination, "--timeout=30", url)) is not null;
+        if (ok && File.Exists(destination)) return true;
+        try { File.Delete(destination); } catch { }
+        return false;
+    }
 
     public bool RevealPath(string path)
     {

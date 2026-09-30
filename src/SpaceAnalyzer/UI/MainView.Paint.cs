@@ -581,23 +581,34 @@ public sealed partial class MainView
         y += bh + 22 * S;
         c.DrawText(Strings.DropHint, new RectF(0, y, W, 20 * S), F(12.5f), T.TextMuted, TextAlign.Center);
 
-        if (_update == UpdateState.Available && _latest is not null)
+        if (_update is UpdateState.Available or UpdateState.Installing or UpdateState.Installed && _latest is not null)
             PaintUpdatePill(c, W - 16 * S, H - 46 * S, 32 * S);
         else
             c.DrawText($"v{Version}", new RectF(0, H - 30 * S, W - 16 * S, 20 * S), F(11.5f), T.TextMuted, TextAlign.Right);
     }
 
     /// <summary>
-    /// "New version 1.2.0", right-aligned at <paramref name="right"/>, once a check has found one: it opens the
-    /// download page. Returns where the next thing to its left can end (<paramref name="right"/> when there is none).
+    /// The update button, right-aligned at <paramref name="right"/>, once a check has found a newer version:
+    /// "Update to 1.2.0" (or "New version 1.2.0", which opens the download page, where this copy can't replace
+    /// itself), then "Updating to 1.2.0…", then "Restart to use 1.2.0". Returns where the next thing to its left can
+    /// end (<paramref name="right"/> when there is none).
     /// </summary>
     float PaintUpdatePill(ICanvas c, float right, float top, float height)
     {
-        if (_update != UpdateState.Available || _latest is not { } latest) return right;
+        if (_latest is not { } latest) return right;
+        (Icon icon, string label, Action? click, string tip) = _update switch
+        {
+            UpdateState.Available when CanSelfUpdate => (Icons.Download, Strings.UpdateTo(latest.Version), (Action)(() => InstallUpdate()), Strings.UpdateTip),
+            UpdateState.Available => (Icons.Download, Strings.NewVersionPill(latest.Version), OpenLatestRelease, Strings.NewVersionTip),
+            UpdateState.Installing => (Icons.Refresh, Strings.Updating(latest.Version), null, Strings.UpdateTip),
+            UpdateState.Installed => (Icons.Refresh, Strings.RestartToUse(latest.Version), RestartUpdated, Strings.RestartTip),
+            _ => (Icons.Download, "", null, ""),
+        };
+        if (label.Length == 0) return right;
         var f = F(12.5f, Weight.Semibold);
-        string label = Strings.NewVersionPill(latest.Version);
-        float w = MeasureButton(c, Icons.Download, label, false, f);
-        Button(c, ZUpdatePill, new RectF(right - w, top, w, height), Icons.Download, label, Btn.Primary, OpenLatestRelease, Strings.NewVersionTip, font: f);
+        float w = MeasureButton(c, icon, label, false, f);
+        Button(c, ZUpdatePill, new RectF(right - w, top, w, height), icon, label, Btn.Primary, click, tip,
+            enabled: _update != UpdateState.Installing, font: f);
         return right - w - 10 * S;
     }
 
@@ -754,16 +765,23 @@ public sealed partial class MainView
         float lw = MeasureButton(c, Icons.GitHub, repo, false, fl);
         Button(c, ZDlgLink, new RectF(r.CenterX - lw / 2, y, lw, 28 * S), Icons.GitHub, repo, Btn.Link, () => OpenWeb(GitHub.Repo), font: fl);
 
-        // "Check for updates", which becomes "Download 1.2.0" once it has found a newer version; then "Close".
+        // "Check for updates", which becomes "Update to 1.2.0" (or "Download 1.2.0") once it has found a newer
+        // version, and "Restart" once that is installed; then "Close".
         var fb = F(13, Weight.Semibold);
-        bool newer = _update == UpdateState.Available && _latest is not null;
-        var icon = newer ? Icons.Download : Icons.Refresh;
-        string label = newer ? Strings.Download(_latest!.Value.Version) : Strings.CheckForUpdates;
+        string v = _latest?.Version ?? "";
+        (Icon icon, string label, Action? click, bool primary) = _update switch
+        {
+            UpdateState.Available when CanSelfUpdate => (Icons.Download, Strings.UpdateTo(v), (Action)(() => InstallUpdate()), true),
+            UpdateState.Available => (Icons.Download, Strings.Download(v), OpenLatestRelease, true),
+            UpdateState.Installing => (Icons.Refresh, Strings.Updating(v), null, true),
+            UpdateState.Installed => (Icons.Refresh, Strings.Restart, RestartUpdated, true),
+            _ => (Icons.Refresh, Strings.CheckForUpdates, (Action)CheckForUpdates, false),
+        };
         float uw = MeasureButton(c, icon, label, false, fb) + 8 * S;
         float cw = MeasureButton(c, null, Strings.Close, false, fb) + 24 * S;
         float bh = 36 * S, bx = MathF.Round(r.CenterX - (uw + 10 * S + cw) / 2), by = r.Bottom - 26 * S - bh;
-        Button(c, ZDlgUpdate, new RectF(bx, by, uw, bh), icon, label, newer ? Btn.Primary : Btn.Secondary,
-            newer ? OpenLatestRelease : CheckForUpdates, enabled: _update != UpdateState.Checking, font: fb);
+        Button(c, ZDlgUpdate, new RectF(bx, by, uw, bh), icon, label, primary ? Btn.Primary : Btn.Secondary,
+            click, enabled: _update is not (UpdateState.Checking or UpdateState.Installing), font: fb);
         Button(c, ZDlgOk, new RectF(bx + uw + 10 * S, by, cw, bh), null, Strings.Close, Btn.Secondary, CloseDialog, font: fb);
     }
 
@@ -778,6 +796,8 @@ public sealed partial class MainView
             UpdateState.UpToDate => (Strings.UpToDate, T.TextSecondary),
             UpdateState.Available when _latest is { } latest => (Strings.NewVersion(latest.Version), T.Dark ? T.AccentHover : T.Accent),
             UpdateState.Failed => (Strings.UpdateCheckFailed, T.Danger),
+            UpdateState.Installing when _latest is { } latest => (Strings.Updating(latest.Version).ToLowerInvariant(), T.TextMuted),
+            UpdateState.Installed when _latest is { } latest => (Strings.InstalledRestart(latest.Version), T.Dark ? T.AccentHover : T.Accent),
             _ => ((string?)null, T.TextMuted),
         };
         if (status is null)

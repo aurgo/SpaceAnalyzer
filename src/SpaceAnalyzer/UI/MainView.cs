@@ -92,23 +92,34 @@ public sealed partial class MainView
     bool _toastError;
     long _toastUntil;
 
-    // ---- check for updates: when the user presses the button, and once a day at start unless turned off
-    internal enum UpdateState { None, Checking, UpToDate, Available, Failed }
+    // ---- updates: checked when the user presses the button, and once a day at start unless turned off; a newer
+    // version then installs itself where this copy can replace itself, and is offered as a download elsewhere
+    internal enum UpdateState { None, Checking, UpToDate, Available, Failed, Installing, Installed }
     UpdateState _update;
     GitHub.Release? _latest;
-    Task? _updateTask;
+    Task? _updateTask, _installTask;
     readonly UpdatePrefs? _updatePrefs;
+    readonly UpdateTarget? _selfUpdate;
+    bool _selfUpdateFailed;
 
     /// <param name="updatePrefs">
     /// Whether to look for a new version at start, and when that last happened. Null (snapshots, tests) never goes
     /// online by itself, and hides the menu item that turns it on and off.
     /// </param>
-    public MainView(IPlatform platform, UpdatePrefs? updatePrefs = null)
+    /// <param name="selfUpdate">What an update replaces; null when this copy can't replace itself.</param>
+    public MainView(IPlatform platform, UpdatePrefs? updatePrefs = null, UpdateTarget? selfUpdate = null)
     {
         P = platform;
         _updatePrefs = updatePrefs;
+        _selfUpdate = selfUpdate;
         UpdateTheme();
     }
+
+    /// <summary>True when a newer version can be installed in place rather than downloaded by hand.</summary>
+    bool CanSelfUpdate => _selfUpdate is not null && !_selfUpdateFailed;
+
+    /// <summary>The menu item that turns the automatic check (and install, where possible) on and off.</summary>
+    public string AutoUpdateLabel => _selfUpdate is not null ? Strings.AutoUpdate : Strings.AutoCheckUpdates;
 
     // =====================================================================================
     // Public entry points used by the platform hosts
@@ -121,6 +132,7 @@ public sealed partial class MainView
         if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path))
             StartScan(path);
         P.SetTitle(Strings.AppName);
+        if (_selfUpdate is { } target) Task.Run(() => SelfUpdate.CleanUp(target));
         if (_updatePrefs?.IsDue(DateTime.UtcNow) == true) CheckForUpdates(automatic: true);
     }
 
@@ -611,7 +623,7 @@ public sealed partial class MainView
             MenuEntry.Separator,
         };
         if (_updatePrefs is not null)
-            items.Add(new((int)Cmd.ToggleAutoUpdate, Strings.AutoCheckUpdates, true, _updatePrefs.AutoCheck));
+            items.Add(new((int)Cmd.ToggleAutoUpdate, AutoUpdateLabel, true, _updatePrefs.AutoCheck));
         items.Add(new((int)Cmd.About, Strings.About));
         OpenMenu(items, _moreButton.Right, _moreButton.Bottom + 4 * S, id => Execute((Cmd)id), alignRight: true);
     }
@@ -972,7 +984,7 @@ public sealed partial class MainView
     /// </summary>
     void CheckForUpdates(bool automatic)
     {
-        if (_update == UpdateState.Checking) return;
+        if (_update is UpdateState.Checking or UpdateState.Installing or UpdateState.Installed) return;
         if (automatic && _update == UpdateState.Available) return;
         var before = _update;
         _update = UpdateState.Checking;
@@ -992,6 +1004,7 @@ public sealed partial class MainView
                 _update = latest is not { } r ? (automatic ? before : UpdateState.Failed)
                     : GitHub.IsNewer(r.Version, Version) ? UpdateState.Available
                     : automatic ? before : UpdateState.UpToDate;
+                if (automatic && _update == UpdateState.Available && CanSelfUpdate) InstallUpdate(automatic: true);
                 P.Invalidate();
             });
         });
@@ -1001,6 +1014,43 @@ public sealed partial class MainView
     void OpenLatestRelease()
     {
         if (_latest is { } r) OpenWeb(r.Url);
+    }
+
+    /// <summary>
+    /// Downloads the newer version found by the last check and puts it in place of this copy, in the background.
+    /// If that fails the version is still offered, as a download page; <paramref name="automatic"/> (nobody pressed
+    /// anything) keeps quiet about it.
+    /// </summary>
+    void InstallUpdate(bool automatic = false)
+    {
+        if (_selfUpdate is not { } target || _latest is not { } latest || _update != UpdateState.Available) return;
+        _update = UpdateState.Installing;
+        _installTask = Task.Run(() =>
+        {
+            string? error;
+            try { error = SelfUpdate.Install(target, latest.Tag, P.DownloadText, P.DownloadFile); }
+            catch (Exception ex) { error = ex.Message; }
+            P.Post(() =>
+            {
+                if (error is null) _update = UpdateState.Installed;
+                else
+                {
+                    ErrorLog.Write(new InvalidOperationException($"SpaceAnalyzer {latest.Version} could not be installed: {error}"));
+                    _update = UpdateState.Available;
+                    _selfUpdateFailed = true;
+                    if (!automatic) ShowToast(Strings.UpdateFailed, error: true);
+                }
+                P.Invalidate();
+            });
+        });
+        P.Invalidate();
+    }
+
+    /// <summary>Starts the updated copy, on the folder being looked at, and closes this one.</summary>
+    void RestartUpdated()
+    {
+        if (_selfUpdate is { } target && SelfUpdate.Relaunch(target, _screen == Screen.Browse ? _root?.FullPath : null)) P.Quit();
+        else ShowToast(Strings.RestartFailed, error: true);
     }
 
     /// <summary>"Ask AI": the prompt goes to the clipboard and the user pastes it into the AI they use.</summary>
@@ -1127,5 +1177,6 @@ public sealed partial class MainView
     internal UpdateState Update => _update;
     internal Task? UpdateTask => _updateTask;
     internal RectF? UpdatePillRect => FindZone(ZUpdatePill)?.R;
+    internal Task? InstallTask => _installTask;
     internal RectF TreemapRect => _tmRect;
 }

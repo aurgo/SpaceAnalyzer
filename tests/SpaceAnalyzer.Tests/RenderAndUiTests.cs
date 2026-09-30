@@ -485,6 +485,92 @@ public class MainViewTests
     }
 
     /// <summary>
+    /// A view that can replace a fake copy of itself in a temporary folder, with GitHub answering that
+    /// <paramref name="tag"/> is out and serving <paramref name="asset"/> for it (listed in SHA256SUMS.txt as
+    /// <paramref name="listedHash"/>, or its real hash).
+    /// </summary>
+    static (MainView View, HeadlessPlatform Platform, Surface Surface, string Exe) StartSelfUpdating(
+        string tag, byte[] asset, string? listedHash = null, bool autoCheck = true)
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "sa-self-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        string exe = Path.Combine(dir, "SpaceAnalyzer.exe");
+        File.WriteAllText(exe, "old");
+        var target = new UpdateTarget(exe, "SpaceAnalyzer-test.exe", UpdateKind.Executable);
+        var p = new HeadlessPlatform { WebText = $$"""{"tag_name": "{{tag}}"}""" };
+        p.WebTexts[SelfUpdate.AssetUrl(tag, "SHA256SUMS.txt")] = $"{listedHash ?? Sha256.Of(asset)}  {target.AssetName}\n";
+        p.WebFiles[SelfUpdate.AssetUrl(tag, target.AssetName)] = asset;
+        var prefs = new UpdatePrefs(Path.Combine(dir, "prefs", "settings.ini")) { AutoCheck = autoCheck };
+        var v = new MainView(p, prefs, target);
+        v.OnResize(1400, 880, 1);
+        v.LoadTree(DemoTree.Build(), DemoTree.Volume, TimeSpan.FromSeconds(1));
+        v.Start(null);
+        Settle(v, p);
+        var s = new Surface(1400, 880);
+        Paint(v, s);
+        return (v, p, s, exe);
+    }
+
+    /// <summary>Lets the background check and install finish and runs what they post back to the UI thread.</summary>
+    static void Settle(MainView v, HeadlessPlatform p)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            v.UpdateTask?.Wait(TimeSpan.FromSeconds(10));
+            v.InstallTask?.Wait(TimeSpan.FromSeconds(10));
+            p.RunPosted();
+        }
+    }
+
+    [Fact]
+    public void At_start_a_newer_version_installs_itself_and_offers_a_restart()
+    {
+        var (v, _, s, exe) = StartSelfUpdating("v99.1.0", "new"u8.ToArray());
+        try
+        {
+            Assert.Equal(MainView.UpdateState.Installed, v.Update);
+            Assert.Equal("new", File.ReadAllText(exe));
+            Assert.NotNull(v.UpdatePillRect); // "Restart to use 99.1.0"
+            Assert.Equal([exe], Directory.GetFiles(Path.GetDirectoryName(exe)!));
+        }
+        finally { Directory.Delete(Path.GetDirectoryName(exe)!, recursive: true); }
+    }
+
+    [Fact]
+    public void A_failed_install_falls_back_to_the_download_page()
+    {
+        var (v, p, s, exe) = StartSelfUpdating("v99.1.0", "tampered"u8.ToArray(), listedHash: new string('0', 64));
+        try
+        {
+            Assert.Equal(MainView.UpdateState.Available, v.Update);
+            Assert.Equal("old", File.ReadAllText(exe));
+            Assert.Null(v.ToastText); // nobody asked, so no error either
+            Click(v, Assert.NotNull(v.UpdatePillRect)); // "New version 99.1.0"
+            Assert.Equal("https://github.com/aurgo/SpaceAnalyzer/releases/tag/v99.1.0", p.OpenedUrl);
+        }
+        finally { Directory.Delete(Path.GetDirectoryName(exe)!, recursive: true); }
+    }
+
+    [Fact]
+    public void With_automatic_updates_off_About_updates_when_asked()
+    {
+        var (v, p, s, exe) = StartSelfUpdating("v99.1.0", "new"u8.ToArray(), autoCheck: false);
+        try
+        {
+            Assert.Null(v.UpdateTask); // nothing at start
+            CheckForUpdates(v, p, s, p.WebText);
+            Assert.Equal(MainView.UpdateState.Available, v.Update);
+            Assert.Equal("old", File.ReadAllText(exe));
+
+            Click(v, Assert.NotNull(v.UpdateButtonRect)); // "Update to 99.1.0"
+            Settle(v, p);
+            Assert.Equal(MainView.UpdateState.Installed, v.Update);
+            Assert.Equal("new", File.ReadAllText(exe));
+        }
+        finally { Directory.Delete(Path.GetDirectoryName(exe)!, recursive: true); }
+    }
+
+    /// <summary>
     /// Zooms into every folder of the demo tree in a small window (like a 1024×768 screen) and paints it:
     /// every sidebar/legend combination (1, 2, 3... file types, few or many files) must lay out.
     /// </summary>

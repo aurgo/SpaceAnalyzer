@@ -1,4 +1,5 @@
 using SpaceAnalyzer.Core;
+using System.Runtime.InteropServices;
 
 // Several tests change process-wide settings (language, units): run everything sequentially.
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
@@ -287,5 +288,191 @@ public class UpdatePrefsTests
         Assert.True(new UpdatePrefs { LastCheckUtc = now.AddHours(-25) }.IsDue(now));
         Assert.True(new UpdatePrefs { LastCheckUtc = now.AddDays(3) }.IsDue(now)); // the clock went back
         Assert.False(new UpdatePrefs { AutoCheck = false }.IsDue(now));
+    }
+}
+
+public class SelfUpdateTests : IDisposable
+{
+    readonly string _dir = Path.Combine(Path.GetTempPath(), "sa-update-" + Guid.NewGuid().ToString("N"));
+
+    public SelfUpdateTests() => Directory.CreateDirectory(_dir);
+    public void Dispose() { if (Directory.Exists(_dir)) Directory.Delete(_dir, recursive: true); }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(3)]
+    [InlineData(55)]
+    [InlineData(56)]
+    [InlineData(63)]
+    [InlineData(64)]
+    [InlineData(65)]
+    [InlineData(119)]
+    [InlineData(200_000)]
+    public void Sha256_matches_the_framework(int length)
+    {
+        var data = new byte[length];
+        new Random(length).NextBytes(data);
+        Assert.Equal(Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(data)), Sha256.Of(data));
+    }
+
+    [Fact]
+    public void Sha256_of_the_standard_vectors()
+    {
+        Assert.Equal("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", Sha256.Of([]));
+        Assert.Equal("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", Sha256.Of("abc"u8));
+    }
+
+    [Fact]
+    public void Reads_the_checksum_of_one_file_from_SHA256SUMS()
+    {
+        string a = new('a', 64), b = new('B', 64);
+        string sums = $"{a}  SpaceAnalyzer-windows-x64.exe\n{b} *SpaceAnalyzer-macos.zip\r\n";
+        Assert.Equal(a, SelfUpdate.ParseChecksum(sums, "SpaceAnalyzer-windows-x64.exe"));
+        Assert.Equal(b.ToLowerInvariant(), SelfUpdate.ParseChecksum(sums, "SpaceAnalyzer-macos.zip"));
+        Assert.Null(SelfUpdate.ParseChecksum(sums, "SpaceAnalyzer-windows-x64-mini.exe"));
+        Assert.Null(SelfUpdate.ParseChecksum(null, "SpaceAnalyzer-macos.zip"));
+    }
+
+    [Fact]
+    public void Picks_the_file_that_replaces_this_copy()
+    {
+        var win = UpdateTarget.For(@"C:\Tools\SpaceAnalyzer.exe", OSPlatform.Windows, Architecture.Arm64, nativeAot: true)!;
+        Assert.Equal(("SpaceAnalyzer-windows-arm64.exe", UpdateKind.Executable), (win.AssetName, win.Kind));
+        Assert.Equal("SpaceAnalyzer-windows-x64-mini.exe", UpdateTarget.For(@"C:\SpaceAnalyzer.exe", OSPlatform.Windows, Architecture.X64, nativeAot: false)!.AssetName);
+        Assert.Equal("SpaceAnalyzer-linux-x64.tar.gz", UpdateTarget.For("/opt/sa/SpaceAnalyzer", OSPlatform.Linux, Architecture.X64, nativeAot: true)!.AssetName);
+
+        var mac = UpdateTarget.For("/Applications/SpaceAnalyzer.app/Contents/MacOS/SpaceAnalyzer", OSPlatform.OSX, Architecture.Arm64, nativeAot: true)!;
+        Assert.Equal(("/Applications/SpaceAnalyzer.app", UpdateKind.AppBundleZip), (mac.Path.Replace('\\', '/').Replace("C:", ""), mac.Kind));
+
+        // Mini builds that run through the dotnet host, a Mac executable outside its bundle, 32-bit, and copies SharpCommander keeps.
+        Assert.Null(UpdateTarget.For("/usr/bin/dotnet", OSPlatform.Linux, Architecture.X64, nativeAot: false));
+        Assert.Null(UpdateTarget.For("/tmp/SpaceAnalyzer", OSPlatform.OSX, Architecture.Arm64, nativeAot: true));
+        Assert.Null(UpdateTarget.For(@"C:\SpaceAnalyzer.exe", OSPlatform.Windows, Architecture.X86, nativeAot: true));
+        Assert.Null(UpdateTarget.For("/Users/ana/Library/Application Support/SharpCommander/tools/SpaceAnalyzer/1.2.0/SpaceAnalyzer.app/Contents/MacOS/SpaceAnalyzer",
+            OSPlatform.OSX, Architecture.Arm64, nativeAot: true));
+    }
+
+    /// <summary>A fake release: the asset's bytes and a SHA256SUMS.txt that lists them (or <paramref name="listedHash"/>).</summary>
+    static (Func<string, string?> Text, Func<string, string, bool> File) Release(string tag, string asset, byte[] bytes, string? listedHash = null)
+    {
+        string sums = $"{listedHash ?? Sha256.Of(bytes)}  {asset}\n";
+        return (url => url == SelfUpdate.AssetUrl(tag, "SHA256SUMS.txt") ? sums : null,
+                (url, path) => { if (url != SelfUpdate.AssetUrl(tag, asset)) return false; File.WriteAllBytes(path, bytes); return true; });
+    }
+
+    [Fact]
+    public void Replaces_an_executable_and_leaves_nothing_behind()
+    {
+        string exe = Path.Combine(_dir, "SpaceAnalyzer.exe");
+        File.WriteAllText(exe, "1.2.0");
+        var target = new UpdateTarget(exe, "SpaceAnalyzer-windows-x64.exe", UpdateKind.Executable);
+        var (text, file) = Release("v1.3.0", target.AssetName, "1.3.0"u8.ToArray());
+
+        Assert.Null(SelfUpdate.Install(target, "v1.3.0", text, file));
+        Assert.Equal("1.3.0", File.ReadAllText(exe));
+        Assert.Equal([exe], Directory.GetFileSystemEntries(_dir));
+    }
+
+    [Fact]
+    public void A_download_that_does_not_match_its_checksum_changes_nothing()
+    {
+        string exe = Path.Combine(_dir, "SpaceAnalyzer.exe");
+        File.WriteAllText(exe, "1.2.0");
+        var target = new UpdateTarget(exe, "SpaceAnalyzer-windows-x64.exe", UpdateKind.Executable);
+        var (text, file) = Release("v1.3.0", target.AssetName, "tampered"u8.ToArray(), listedHash: new string('0', 64));
+
+        Assert.NotNull(SelfUpdate.Install(target, "v1.3.0", text, file));
+        Assert.Equal("1.2.0", File.ReadAllText(exe));
+        Assert.Equal([exe], Directory.GetFileSystemEntries(_dir));
+
+        // No checksum published, or no network: nothing either.
+        Assert.NotNull(SelfUpdate.Install(target, "v1.3.0", _ => null, file));
+        Assert.Equal("1.2.0", File.ReadAllText(exe));
+    }
+
+    [Fact]
+    public void Replaces_the_Linux_program_from_its_tar_gz()
+    {
+        if (OperatingSystem.IsWindows()) return; // the .tar.gz is only published for Linux
+        string exe = Path.Combine(_dir, "SpaceAnalyzer");
+        File.WriteAllText(exe, "1.2.0");
+
+        var archive = new MemoryStream();
+        using (var gzip = new System.IO.Compression.GZipStream(archive, System.IO.Compression.CompressionLevel.Fastest, leaveOpen: true))
+        using (var tar = new System.Formats.Tar.TarWriter(gzip))
+        {
+            var entry = new System.Formats.Tar.PaxTarEntry(System.Formats.Tar.TarEntryType.RegularFile, "SpaceAnalyzer")
+            {
+                DataStream = new MemoryStream("1.3.0"u8.ToArray()),
+                Mode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute,
+            };
+            tar.WriteEntry(entry);
+        }
+        var target = new UpdateTarget(exe, "SpaceAnalyzer-linux-x64.tar.gz", UpdateKind.TarGz);
+        var (text, file) = Release("v1.3.0", target.AssetName, archive.ToArray());
+
+        Assert.Null(SelfUpdate.Install(target, "v1.3.0", text, file));
+        Assert.Equal("1.3.0", File.ReadAllText(exe));
+        Assert.True(File.GetUnixFileMode(exe).HasFlag(UnixFileMode.UserExecute));
+        Assert.Equal([exe], Directory.GetFileSystemEntries(_dir));
+    }
+
+    [Fact]
+    public void Replaces_the_whole_macOS_bundle()
+    {
+        string app = Path.Combine(_dir, "SpaceAnalyzer.app");
+        string program = Path.Combine(app, "Contents", "MacOS", "SpaceAnalyzer");
+        Directory.CreateDirectory(Path.GetDirectoryName(program)!);
+        File.WriteAllText(program, "1.2.0");
+        File.WriteAllText(Path.Combine(app, "Contents", "only-in-1.2.0"), "");
+        var target = new UpdateTarget(app, "SpaceAnalyzer-macos.zip", UpdateKind.AppBundleZip);
+        var (text, file) = Release("v1.3.0", target.AssetName, "zip"u8.ToArray());
+
+        // ditto only exists on macOS: unpack by writing what the zip holds.
+        bool Unpack(string archive, string destination, UpdateKind kind)
+        {
+            string p = Path.Combine(destination, "SpaceAnalyzer.app", "Contents", "MacOS", "SpaceAnalyzer");
+            Directory.CreateDirectory(Path.GetDirectoryName(p)!);
+            File.WriteAllText(p, "1.3.0");
+            return true;
+        }
+
+        Assert.Null(SelfUpdate.Install(target, "v1.3.0", text, file, Unpack));
+        Assert.Equal("1.3.0", File.ReadAllText(program));
+        Assert.False(File.Exists(Path.Combine(app, "Contents", "only-in-1.2.0")));
+        Assert.Equal([app], Directory.GetFileSystemEntries(_dir));
+    }
+
+    [Fact]
+    public void Cleans_up_old_copies_and_interrupted_downloads()
+    {
+        string exe = Path.Combine(_dir, "SpaceAnalyzer.exe");
+        File.WriteAllText(exe, "");
+        File.WriteAllText(exe + ".1a2b3c4d.old", "");
+        string stale = Directory.CreateDirectory(Path.Combine(_dir, ".SpaceAnalyzer-update-00000000")).FullName;
+        Directory.SetLastWriteTimeUtc(stale, DateTime.UtcNow.AddDays(-1));
+        string fresh = Directory.CreateDirectory(Path.Combine(_dir, ".SpaceAnalyzer-update-11111111")).FullName; // maybe another copy's
+
+        SelfUpdate.CleanUp(new UpdateTarget(exe, "SpaceAnalyzer-windows-x64.exe", UpdateKind.Executable));
+        Assert.Equal(new[] { exe, fresh }.Order(), Directory.GetFileSystemEntries(_dir).Order());
+    }
+}
+
+public class UpdatePrefsPathTests
+{
+    [Fact]
+    public void The_settings_file_is_never_put_in_the_current_directory()
+    {
+        if (OperatingSystem.IsWindows()) return; // %APPDATA% always exists there
+        string? before = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+        string missing = Path.Combine(Path.GetTempPath(), "sa-no-such-config-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            // A fresh account whose ~/.config doesn't exist yet: the file goes there once it is created.
+            Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", missing);
+            if (OperatingSystem.IsLinux()) Assert.Equal(Path.Combine(missing, "SpaceAnalyzer", "settings.ini"), UpdatePrefs.DefaultPath);
+            Assert.True(UpdatePrefs.DefaultPath is null || Path.IsPathFullyQualified(UpdatePrefs.DefaultPath));
+        }
+        finally { Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", before); }
     }
 }

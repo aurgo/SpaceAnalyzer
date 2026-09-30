@@ -22,8 +22,16 @@ public sealed class UpdatePrefs
 
     public UpdatePrefs(string? filePath = null) => FilePath = filePath;
 
-    public static string DefaultPath =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SpaceAnalyzer", "settings.ini");
+    /// <summary>
+    /// settings.ini in the user's settings folder, or null when the system doesn't name one. DoNotVerify: by default
+    /// a folder that doesn't exist yet (a fresh ~/.config) comes back empty, which would put the file in the current
+    /// directory.
+    /// </summary>
+    public static string? DefaultPath =>
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify) is { Length: > 0 } folder
+            && Path.IsPathFullyQualified(folder)
+            ? Path.Combine(folder, "SpaceAnalyzer", "settings.ini")
+            : null;
 
     /// <summary>True when the automatic check is on and has not run for a day (or the clock went back since).</summary>
     public bool IsDue(DateTime nowUtc) =>
@@ -41,7 +49,7 @@ public sealed class UpdatePrefs
         var prefs = new UpdatePrefs(path ?? DefaultPath);
         try
         {
-            if (!File.Exists(prefs.FilePath)) return prefs;
+            if (prefs.FilePath is null || !File.Exists(prefs.FilePath)) return prefs;
             foreach (var line in File.ReadAllLines(prefs.FilePath))
             {
                 int eq = line.IndexOf('=');

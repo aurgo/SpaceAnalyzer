@@ -51,7 +51,7 @@ sealed unsafe class MacHost : IPlatform
         _app = Send(Class("NSApplication"), "sharedApplication");
         SendLong(_app, "setActivationPolicy:", 0); // a regular app: Dock icon and menu bar
         RegisterViewClass();
-        _view = new MainView(this, UpdatePrefs.ForThisUser());
+        _view = new MainView(this, UpdatePrefs.ForThisUser(), UpdateTarget.ForThisProcess());
         CreateWindow();
         BuildMainMenu();
         SetAppIcon();
@@ -148,7 +148,7 @@ sealed unsafe class MacHost : IPlatform
 
         var app = NewMenu(Strings.AppName);
         AddCmd(app, Strings.About, Cmd.About);
-        if (_view.IsEnabled(Cmd.ToggleAutoUpdate)) AddCmd(app, Strings.AutoCheckUpdates, Cmd.ToggleAutoUpdate, "");
+        if (_view.IsEnabled(Cmd.ToggleAutoUpdate)) AddCmd(app, _view.AutoUpdateLabel, Cmd.ToggleAutoUpdate, "");
         AddSeparator(app);
         AddStd(app, T("Ocultar SpaceAnalyzer", "Hide SpaceAnalyzer"), "hide:", "h", cmd);
         AddStd(app, T("Ocultar otros", "Hide Others"), "hideOtherApplications:", "h", cmd | opt);
@@ -640,6 +640,22 @@ sealed unsafe class MacHost : IPlatform
             return ToManaged(Send(Class("NSString"), "stringWithContentsOfURL:encoding:error:", nsUrl, (IntPtr)Utf8, IntPtr.Zero));
         }
         catch (Exception ex) { Report(ex); return null; }
+        finally { objc_autoreleasePoolPop(pool); }
+    }
+
+    public bool DownloadFile(string url, string destination)
+    {
+        var pool = objc_autoreleasePoolPush();
+        try
+        {
+            var nsUrl = Send(Class("NSURL"), "URLWithString:", Str(url));
+            if (nsUrl == IntPtr.Zero) return false;
+            var data = Send(Class("NSData"), "dataWithContentsOfURL:", nsUrl);
+            if (data == IntPtr.Zero) return false;
+            return ((delegate* unmanaged<IntPtr, IntPtr, IntPtr, byte, byte>)MsgSend)(
+                data, Sel("writeToFile:atomically:"), Str(destination), 1) != 0;
+        }
+        catch (Exception ex) { Report(ex); return false; }
         finally { objc_autoreleasePoolPop(pool); }
     }
 

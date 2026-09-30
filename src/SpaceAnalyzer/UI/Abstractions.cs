@@ -78,6 +78,11 @@ public interface IPlatform
     /// day at start unless the automatic check is turned off.
     /// </summary>
     string? DownloadText(string url);
+    /// <summary>
+    /// Downloads a file over HTTPS into <paramref name="destination"/>, following redirects; false on any failure.
+    /// Blocks, so call it off the UI thread. Only the updater uses it, to fetch a new version.
+    /// </summary>
+    bool DownloadFile(string url, string destination);
     bool RevealPath(string path);
     bool MoveToTrash(string path, out string? error);
     void CopyText(string text);
@@ -115,7 +120,17 @@ public sealed class HeadlessPlatform : IPlatform
     public string? PickFolder(string title) => null;
     public bool OpenPath(string path) => false;
     public bool OpenUrl(string url) { OpenedUrl = url; return false; }
-    public string? DownloadText(string url) => WebText;
+    /// <summary>Answers of <see cref="DownloadText"/> for particular addresses; any other gets <see cref="WebText"/>.</summary>
+    public readonly Dictionary<string, string> WebTexts = [];
+    public string? DownloadText(string url) => WebTexts.TryGetValue(url, out var text) ? text : WebText;
+    /// <summary>What <see cref="DownloadFile"/> serves, by address; anything else fails, as if there were no network.</summary>
+    public readonly Dictionary<string, byte[]> WebFiles = [];
+    public bool DownloadFile(string url, string destination)
+    {
+        if (!WebFiles.TryGetValue(url, out var bytes)) return false;
+        File.WriteAllBytes(destination, bytes);
+        return true;
+    }
     public bool RevealPath(string path) => false;
     public bool MoveToTrash(string path, out string? error) { error = "headless"; return false; }
     public void CopyText(string text) => Clipboard = text;
