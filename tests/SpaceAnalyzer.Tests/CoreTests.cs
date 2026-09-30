@@ -342,7 +342,7 @@ public class SelfUpdateTests : IDisposable
         Assert.Equal("SpaceAnalyzer-linux-x64.tar.gz", UpdateTarget.For("/opt/sa/SpaceAnalyzer", OSPlatform.Linux, Architecture.X64, nativeAot: true)!.AssetName);
 
         var mac = UpdateTarget.For("/Applications/SpaceAnalyzer.app/Contents/MacOS/SpaceAnalyzer", OSPlatform.OSX, Architecture.Arm64, nativeAot: true)!;
-        Assert.Equal(("/Applications/SpaceAnalyzer.app", UpdateKind.AppBundleZip), (mac.Path.Replace('\\', '/').Replace("C:", ""), mac.Kind));
+        Assert.Equal((Path.GetFullPath("/Applications/SpaceAnalyzer.app"), UpdateKind.AppBundleZip), (mac.Path, mac.Kind));
 
         // Mini builds that run through the dotnet host, a Mac executable outside its bundle, 32-bit, and copies SharpCommander keeps.
         Assert.Null(UpdateTarget.For("/usr/bin/dotnet", OSPlatform.Linux, Architecture.X64, nativeAot: false));
